@@ -34,6 +34,7 @@ func startLocalHTTPProxy(be core.Backend) error {
 		Addr:    options.LocalHTTPProxy,
 		Handler: proxy,
 	}
+	log.Println("Starting http proxy on ", options.LocalHTTPProxy)
 	go server.ListenAndServe()
 	go func() {
 		r := core.NewRelayer(fe, be)
@@ -45,7 +46,7 @@ func startLocalHTTPProxy(be core.Backend) error {
 }
 
 func startRelayer() {
-	pipeline := &relayer.Pipeline{}
+	log.Println("Listening on ", options.LocalAddr)
 	ln, err := net.Listen("tcp", options.LocalAddr)
 	if err != nil {
 		log.Println(err)
@@ -54,11 +55,13 @@ func startRelayer() {
 	defer ln.Close()
 	var fe core.Frontend
 	var be core.Backend
+	pipeline := &relayer.Pipeline{}
 	if options.NextHop == "" {
 		fe = relayer.NewWrapFE(ln.(*net.TCPListener), pipeline)
 		be = &relayer.TCPBE{}
 	} else {
 		fe = relayer.NewSocks5FE(ln.(*net.TCPListener))
+		log.Println("Backend is connecting to ", options.NextHop)
 		be = relayer.NewWrapBE(options.NextHop, pipeline)
 		if options.LocalHTTPProxy != "" {
 			if err := startLocalHTTPProxy(be); err != nil {
