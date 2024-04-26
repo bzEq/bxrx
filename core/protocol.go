@@ -41,6 +41,7 @@ type HTTPProtocol struct{}
 func (self *HTTPProtocol) Pack(b *IoVec, out *bufio.Writer) error {
 	req, err := http.NewRequest("POST", "/", b)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0")
@@ -56,14 +57,18 @@ func (self *HTTPProtocol) Pack(b *IoVec, out *bufio.Writer) error {
 func (self *HTTPProtocol) Unpack(in *bufio.Reader, b *IoVec) error {
 	req, err := http.ReadRequest(in)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	defer req.Body.Close()
 	if req.ContentLength < 0 || req.ContentLength > DEFAULT_BUFFER_LIMIT {
-		return errors.New("Invalid ContentLength")
+		err = fmt.Errorf("Content length %d is abnormal", req.ContentLength)
+		log.Println(err)
+		return err
 	}
 	body := make([]byte, req.ContentLength)
 	if _, err = io.ReadFull(req.Body, body); err != nil {
+		log.Println(err)
 		return err
 	}
 	b.Take(body)
