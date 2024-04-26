@@ -4,7 +4,6 @@ package core
 
 import (
 	"io"
-	"log"
 )
 
 // SimpleSwitch is not responsible to close ports.
@@ -30,15 +29,11 @@ func (self *SimpleSwitch) switchTraffic(in, out Port) {
 	for {
 		var b IoVec
 		if err := in.Unpack(&b); err != nil {
-			if err == io.EOF {
-				out.CloseWrite()
-			} else {
-				log.Println(err)
-			}
+			out.CloseWrite()
 			return
 		}
 		if err := out.Pack(&b); err != nil {
-			log.Println(err)
+			in.CloseRead()
 			return
 		}
 	}
