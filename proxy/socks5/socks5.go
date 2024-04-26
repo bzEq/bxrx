@@ -56,19 +56,20 @@ func ExchangeMetadata(rw net.Conn) (err error) {
 	// VER, NMETHODS.
 	rw.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(rw, buf[:2]); err != nil {
-		log.Println("Reading VER, NMETHODS failed")
+		log.Println("Reading VER, NMETHODS failed: ", err)
 		return
 	}
 	// METHODS.
 	methods := buf[1]
 	rw.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(rw, buf[:methods]); err != nil {
-		log.Println("Reading METHODS failed")
+		log.Println("Reading METHODS failed: ", err)
 		return
 	}
 	// No auth for now.
 	rw.SetWriteDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = rw.Write([]byte{VER, 0}); err != nil {
+		log.Println("Writing VER failed:", err)
 		return
 	}
 	return
@@ -79,6 +80,7 @@ func ReceiveRequest(r net.Conn) (req Request, err error) {
 	// VER, CMD, RSV, ATYP
 	r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(r, buf[:4]); err != nil {
+		log.Println("Reading request failed: ", err)
 		return req, err
 	}
 	req.VER = buf[0]
@@ -88,6 +90,7 @@ func ReceiveRequest(r net.Conn) (req Request, err error) {
 	case ATYP_IPV6:
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 		if _, err = io.ReadFull(r, buf[:net.IPv6len]); err != nil {
+			log.Println("Reading IPv6 address failed: ", err)
 			return
 		}
 		req.DST_ADDR = make([]byte, net.IPv6len)
@@ -95,6 +98,7 @@ func ReceiveRequest(r net.Conn) (req Request, err error) {
 	case ATYP_IPV4:
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 		if _, err = io.ReadFull(r, buf[:net.IPv4len]); err != nil {
+			log.Println("Reading IPv4 address failed: ", err)
 			return
 		}
 		req.DST_ADDR = make([]byte, net.IPv4len)
@@ -102,19 +106,24 @@ func ReceiveRequest(r net.Conn) (req Request, err error) {
 	case ATYP_DOMAINNAME:
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 		if _, err = io.ReadFull(r, buf[:1]); err != nil {
+			log.Println("Reading length of domain name failed: ", err)
 			return
 		}
 		req.DST_ADDR = make([]byte, buf[0])
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 		if _, err = io.ReadFull(r, req.DST_ADDR); err != nil {
+			log.Println("Reading domain name failed: ", err)
 			return
 		}
 	default:
-		return req, fmt.Errorf("Unsupported ATYP: %d", req.ATYP)
+		err = fmt.Errorf("Unsupported ATYP: %d", req.ATYP)
+		log.Println(err)
+		return req, err
 	}
 	r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	_, err = io.ReadFull(r, buf[:2])
 	if err != nil {
+		log.Println("Reading port failed: ", err)
 		return req, err
 	}
 	copy(req.DST_PORT[:2], buf[:2])
