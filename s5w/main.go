@@ -31,10 +31,6 @@ func startRelayer() {
 		fe = relayer.NewWrapFE(ln.(*net.TCPListener), pipeline)
 		be = &relayer.TCPBE{}
 	} else {
-		if err != nil {
-			log.Println(err)
-			return
-		}
 		fe = relayer.NewSocks5FE(ln.(*net.TCPListener))
 		be = relayer.NewWrapBE(options.NextHop, pipeline)
 	}
