@@ -20,12 +20,12 @@ func NewSocks5FE(ln *net.TCPListener) *Socks5FE {
 func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error) {
 	err = socks5.ExchangeMetadata(c)
 	if err != nil {
-		log.Println("ExchangeMetadata failed: ", err)
+		log.Println("ExchangeMetadata failed:", err)
 		return
 	}
 	req, err := socks5.ReceiveRequest(c)
 	if err != nil {
-		log.Println("ReceiveRequest failed: ", err)
+		log.Println("ReceiveRequest failed:", err)
 		return nil, "", err
 	}
 	switch req.CMD {
