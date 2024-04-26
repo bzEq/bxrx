@@ -4,10 +4,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"time"
-
-	"github.com/go-errors/errors"
 )
 
 const VER = 5
@@ -57,12 +56,14 @@ func ExchangeMetadata(rw net.Conn) (err error) {
 	// VER, NMETHODS.
 	rw.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(rw, buf[:2]); err != nil {
+		log.Println("Reading VER, NMETHODS failed")
 		return
 	}
 	// METHODS.
 	methods := buf[1]
 	rw.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(rw, buf[:methods]); err != nil {
+		log.Println("Reading METHODS failed")
 		return
 	}
 	// No auth for now.
@@ -109,7 +110,7 @@ func ReceiveRequest(r net.Conn) (req Request, err error) {
 			return
 		}
 	default:
-		return req, errors.Errorf("Unsupported ATYP: %d", req.ATYP)
+		return req, fmt.Errorf("Unsupported ATYP: %d", req.ATYP)
 	}
 	r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	_, err = io.ReadFull(r, buf[:2])

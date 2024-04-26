@@ -4,10 +4,9 @@ package core
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net"
-
-	"github.com/go-errors/errors"
 )
 
 type IoVec net.Buffers
@@ -76,7 +75,7 @@ func (self *IoVec) Consume() []byte {
 func (self IoVec) LastByte() (byte, error) {
 	l := len(self)
 	if l == 0 {
-		return 0, errors.New("This IoVec is empty")
+		return 0, fmt.Errorf("This IoVec is empty")
 	}
 	k := len(self[l-1])
 	return self[l-1][k-1], nil
@@ -95,7 +94,7 @@ func (self *IoVec) Drop(s int) error {
 		}
 		c += vl
 	}
-	return errors.Errorf("Unable to drop %d bytes", s)
+	return fmt.Errorf("Unable to drop %d bytes", s)
 }
 
 func (self IoVec) At(i int) (byte, error) {
@@ -106,7 +105,7 @@ func (self IoVec) At(i int) (byte, error) {
 		}
 		c += len(v)
 	}
-	return 0, errors.Errorf("Index %d out of bound", i)
+	return 0, fmt.Errorf("Index %d out of bound", i)
 }
 
 func (self *IoVec) Split(i int) (tail IoVec) {
