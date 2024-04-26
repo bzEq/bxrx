@@ -28,6 +28,7 @@ type TailPaddingDecoder struct{}
 func (self *TailPaddingDecoder) Run(b *core.IoVec) error {
 	t, err := b.LastByte()
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	return b.Drop(1 + int(t))
@@ -41,6 +42,7 @@ func (self *OBFSEncoder) Run(b *core.IoVec) error {
 	buf := b.Consume()
 	buf, err := self.FastOBFS.Encode(buf)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	b.Take(buf)
@@ -55,6 +57,7 @@ func (self *OBFSDecoder) Run(b *core.IoVec) error {
 	buf := b.Consume()
 	buf, err := self.FastOBFS.Decode(buf)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	b.Take(buf)
@@ -91,6 +94,7 @@ func (self *RandomDecoder) AddPM(p *core.PassManager) {
 func (self *RandomDecoder) Run(b *core.IoVec) error {
 	t, err := b.LastByte()
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	n := int(t)
