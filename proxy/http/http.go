@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -33,7 +32,7 @@ func (self *HTTPProxy) handleConnect(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	h, ok := w.(http.Hijacker)
 	if !ok {
-		log.Println(fmt.Errorf("Hijacking not supported"))
+		log.Println("Hijacking not supported")
 		http.Error(w, "Hijacking not supported", http.StatusInternalServerError)
 		return
 	}

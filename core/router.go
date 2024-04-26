@@ -5,6 +5,8 @@ package core
 import (
 	"fmt"
 	"log"
+
+	"github.com/go-errors/errors"
 )
 
 type RouteId uint64
@@ -48,7 +50,7 @@ func (self *SimpleRouter) route(id RouteId, ri *RouteInfo) {
 func (self *SimpleRouter) NewRoute(id RouteId, P *SyncPort) (*RouteInfo, error) {
 	ri := &RouteInfo{P: P, Err: make(chan error)}
 	if v, in := self.routes.LoadOrStore(id, ri); in {
-		return v, fmt.Errorf("Route #%d already exists", id)
+		return v, errors.Errorf("Route #%d already exists", id)
 	}
 	go func() {
 		defer self.routes.Delete(id)

@@ -1,12 +1,12 @@
 package relayer
 
 import (
-	"fmt"
 	"log"
 	"net"
 
 	"github.com/bzEq/bxrx/core"
 	"github.com/bzEq/bxrx/proxy/socks5"
+	"github.com/go-errors/errors"
 )
 
 type Socks5FE struct {
@@ -46,7 +46,7 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error
 			BND_ADDR: make([]byte, net.IPv4len),
 		}
 		socks5.SendReply(c, reply)
-		err = fmt.Errorf("Unsupported CMD: %d", req.CMD)
+		err = errors.Errorf("Unsupported CMD: %d", req.CMD)
 	}
 	p = core.NewRawPort(c)
 	return
