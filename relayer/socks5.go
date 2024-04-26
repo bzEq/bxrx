@@ -17,7 +17,7 @@ func NewSocks5FE(ln *net.TCPListener) *Socks5FE {
 	return &Socks5FE{ln}
 }
 
-func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr net.Addr, err error) {
+func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error) {
 	err = socks5.ExchangeMetadata(c)
 	if err != nil {
 		log.Println("ExchangeMetadata")
@@ -26,7 +26,7 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr net.Addr, err err
 	req, err := socks5.ReceiveRequest(c)
 	if err != nil {
 		log.Println("ReceiveRequest")
-		return nil, nil, err
+		return nil, "", err
 	}
 	switch req.CMD {
 	case socks5.CMD_CONNECT:
@@ -37,7 +37,7 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr net.Addr, err err
 			BND_ADDR: make([]byte, net.IPv4len),
 		}
 		socks5.SendReply(c, reply)
-		addr, err = net.ResolveTCPAddr("tcp", socks5.GetDialAddress(req))
+		addr = socks5.GetDialAddress(req)
 	default:
 		reply := socks5.Reply{
 			VER:      req.VER,
@@ -52,10 +52,10 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr net.Addr, err err
 	return
 }
 
-func (self *Socks5FE) Accept() (p core.Port, addr net.Addr, err error) {
+func (self *Socks5FE) Accept() (p core.Port, addr string, err error) {
 	c, err := self.ln.Accept()
 	if err != nil {
-		return nil, nil, err
+		return nil, "", err
 	}
 	p, addr, err = self.handshake(c)
 	if err != nil {

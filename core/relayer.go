@@ -4,7 +4,6 @@ package core
 
 import (
 	"log"
-	"net"
 )
 
 type Relayer struct {
@@ -17,11 +16,11 @@ func NewRelayer(fe Frontend, be Backend) *Relayer {
 }
 
 type Frontend interface {
-	Accept() (Port, net.Addr, error)
+	Accept() (Port, string, error)
 }
 
 type Backend interface {
-	Dial(addr net.Addr) (Port, error)
+	Dial(addr string) (Port, error)
 }
 
 func (self *Relayer) Relay() error {
@@ -31,7 +30,7 @@ func (self *Relayer) Relay() error {
 			log.Println(err)
 			continue
 		}
-		go func(fp Port, addr net.Addr) {
+		go func(fp Port, addr string) {
 			defer fp.Close()
 			log.Println("Dialing ", addr)
 			bp, err := self.be.Dial(addr)

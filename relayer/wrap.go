@@ -17,7 +17,7 @@ func NewWrapFE(ln *net.TCPListener, pc core.PortCreator) *WrapFE {
 	return &WrapFE{ln, pc}
 }
 
-func (self *WrapFE) handshake(c net.Conn) (p core.Port, addr net.Addr, err error) {
+func (self *WrapFE) handshake(c net.Conn) (p core.Port, addr string, err error) {
 	p = self.pc.Create(c)
 	var b core.IoVec
 	err = p.Unpack(&b)
@@ -30,14 +30,14 @@ func (self *WrapFE) handshake(c net.Conn) (p core.Port, addr net.Addr, err error
 	if err != nil {
 		return
 	}
-	addr = &req.Addr
+	addr = req.Addr
 	return
 }
 
-func (self *WrapFE) Accept() (p core.Port, addr net.Addr, err error) {
+func (self *WrapFE) Accept() (p core.Port, addr string, err error) {
 	c, err := self.ln.Accept()
 	if err != nil {
-		return nil, nil, err
+		return nil, "", err
 	}
 	p, addr, err = self.handshake(c)
 	if err != nil {
@@ -46,19 +46,19 @@ func (self *WrapFE) Accept() (p core.Port, addr net.Addr, err error) {
 	return
 }
 
-func NewWrapBE(raddr *net.TCPAddr, pc core.PortCreator) *WrapBE {
+func NewWrapBE(raddr string, pc core.PortCreator) *WrapBE {
 	return &WrapBE{raddr, pc}
 }
 
 type WrapBE struct {
-	raddr *net.TCPAddr
+	raddr string
 	pc    core.PortCreator
 }
 
-func (self *WrapBE) handshake(c net.Conn, addr net.Addr) (p core.Port, err error) {
+func (self *WrapBE) handshake(c net.Conn, addr string) (p core.Port, err error) {
 	var b core.IoVec
 	enc := gob.NewEncoder(&b)
-	req := wrap.TCPRequest{*addr.(*net.TCPAddr)}
+	req := wrap.TCPRequest{addr}
 	err = enc.Encode(&req)
 	if err != nil {
 		return
@@ -68,8 +68,8 @@ func (self *WrapBE) handshake(c net.Conn, addr net.Addr) (p core.Port, err error
 	return
 }
 
-func (self *WrapBE) Dial(addr net.Addr) (p core.Port, err error) {
-	c, err := net.DialTCP("tcp", nil, self.raddr)
+func (self *WrapBE) Dial(addr string) (p core.Port, err error) {
+	c, err := net.Dial("tcp", self.raddr)
 	if err != nil {
 		return nil, err
 	}

@@ -15,8 +15,8 @@ type Options struct {
 
 type TCPBE struct{}
 
-func (self *TCPBE) Dial(addr net.Addr) (core.Port, error) {
-	c, err := net.Dial(addr.Network(), addr.String())
+func (self *TCPBE) Dial(addr string) (core.Port, error) {
+	c, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
