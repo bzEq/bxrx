@@ -2,10 +2,6 @@
 
 package core
 
-import (
-	"io"
-)
-
 // SimpleSwitch is not responsible to close ports.
 type SimpleSwitch struct {
 	done [2]chan struct{}

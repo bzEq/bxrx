@@ -4,8 +4,9 @@ package core
 
 import (
 	"bufio"
-	"errors"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -51,6 +52,7 @@ func (self *HTTPProtocol) Pack(b *IoVec, out *bufio.Writer) error {
 			return io.NopCloser(b), nil
 		}
 	}
+	log.Println("Packing %d bytes", req.ContentLength)
 	return req.Write(out)
 }
 
@@ -66,6 +68,7 @@ func (self *HTTPProtocol) Unpack(in *bufio.Reader, b *IoVec) error {
 		log.Println(err)
 		return err
 	}
+	log.Println("Unpacking %d bytes", req.ContentLength)
 	body := make([]byte, req.ContentLength)
 	if _, err = io.ReadFull(req.Body, body); err != nil {
 		log.Println(err)

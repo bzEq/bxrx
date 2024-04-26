@@ -5,6 +5,7 @@ package passes
 import (
 	"bytes"
 	"encoding/binary"
+	"log"
 	"math/rand"
 
 	"github.com/bzEq/bxrx/core"

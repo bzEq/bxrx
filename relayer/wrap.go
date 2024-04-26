@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"encoding/gob"
+	"log"
 	"net"
 
 	"github.com/bzEq/bxrx/core"
@@ -28,6 +29,7 @@ func (self *WrapFE) handshake(c net.Conn) (p core.Port, addr string, err error) 
 	var req wrap.TCPRequest
 	err = dec.Decode(&req)
 	if err != nil {
+		log.Println(err)
 		return
 	}
 	addr = req.Addr
@@ -37,6 +39,7 @@ func (self *WrapFE) handshake(c net.Conn) (p core.Port, addr string, err error) 
 func (self *WrapFE) Accept() (p core.Port, addr string, err error) {
 	c, err := self.ln.Accept()
 	if err != nil {
+		log.Println(err)
 		return nil, "", err
 	}
 	p, addr, err = self.handshake(c)
@@ -61,6 +64,7 @@ func (self *WrapBE) handshake(c net.Conn, addr string) (p core.Port, err error) 
 	req := wrap.TCPRequest{addr}
 	err = enc.Encode(&req)
 	if err != nil {
+		log.Println(err)
 		return
 	}
 	p = self.pc.Create(c)
@@ -71,6 +75,7 @@ func (self *WrapBE) handshake(c net.Conn, addr string) (p core.Port, err error) 
 func (self *WrapBE) Dial(addr string) (p core.Port, err error) {
 	c, err := net.Dial("tcp", self.raddr)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	p, err = self.handshake(c, addr)
