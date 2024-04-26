@@ -56,14 +56,14 @@ func ExchangeMetadata(rw net.Conn) (err error) {
 	// VER, NMETHODS.
 	rw.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(rw, buf[:2]); err != nil {
-		log.Println("Reading VER, NMETHODS")
+		log.Println("Reading VER, NMETHODS failed")
 		return
 	}
 	// METHODS.
 	methods := buf[1]
 	rw.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(rw, buf[:methods]); err != nil {
-		log.Println("Reading METHODS")
+		log.Println("Reading METHODS failed")
 		return
 	}
 	// No auth for now.
