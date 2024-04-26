@@ -27,7 +27,6 @@ func (self *Relayer) Relay() error {
 	for {
 		fp, addr, err := self.fe.Accept()
 		if err != nil {
-			log.Println(err)
 			continue
 		}
 		go func(fp Port, addr string) {
@@ -35,7 +34,6 @@ func (self *Relayer) Relay() error {
 			log.Println("Dialing ", addr)
 			bp, err := self.be.Dial(addr)
 			if err != nil {
-				log.Println(err)
 				return
 			}
 			defer bp.Close()
