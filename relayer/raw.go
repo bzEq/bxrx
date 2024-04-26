@@ -9,8 +9,9 @@ import (
 )
 
 type Options struct {
-	LocalAddr string
-	NextHop   string
+	LocalAddr      string
+	LocalHTTPProxy string
+	NextHop        string
 }
 
 type TCPBE struct{}

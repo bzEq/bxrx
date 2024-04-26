@@ -10,12 +10,31 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"net/http"
+	"net/url"
 
 	"github.com/bzEq/bxrx/core"
+	h1p "github.com/bzEq/bxrx/proxy/http"
 	"github.com/bzEq/bxrx/relayer"
 )
 
 var options relayer.Options
+
+func startLocalHTTPProxy() error {
+	socksProxyURL, err := url.Parse("socks5://" + options.LocalAddr)
+	if err != nil {
+		return err
+	}
+	proxy := &h1p.HTTPProxy{
+		Transport: &http.Transport{Proxy: http.ProxyURL(socksProxyURL)},
+	}
+	server := &http.Server{
+		Addr:    options.LocalHTTPProxy,
+		Handler: proxy,
+	}
+	go server.ListenAndServe()
+	return nil
+}
 
 func startRelayer() {
 	pipeline := &relayer.Pipeline{}
@@ -33,6 +52,11 @@ func startRelayer() {
 	} else {
 		fe = relayer.NewSocks5FE(ln.(*net.TCPListener))
 		be = relayer.NewWrapBE(options.NextHop, pipeline)
+		if options.LocalHTTPProxy != "" {
+			if err := startLocalHTTPProxy(); err != nil {
+				log.Println(err)
+			}
+		}
 	}
 	r := core.NewRelayer(fe, be)
 	if err := r.Relay(); err != nil {
@@ -49,6 +73,7 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging")
 	flag.StringVar(&options.LocalAddr, "l", "localhost:1080", "Listen address of this relayer")
 	flag.StringVar(&options.NextHop, "n", "", "Address of next-hop relayer")
+	flag.StringVar(&options.LocalHTTPProxy, "http_proxy", "", "Enable this relayer serving as http proxy")
 	flag.Parse()
 	if !debug {
 		log.SetOutput(ioutil.Discard)
