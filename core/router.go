@@ -62,12 +62,10 @@ func (self *SimpleRouter) Run() {
 		var b IoVec
 		err := self.P.Unpack(&b)
 		if err != nil {
-			log.Println(err)
 			return
 		}
 		id, err := self.C.Decode(&b)
 		if err != nil {
-			log.Println(err)
 			continue
 		}
 		ri, in := self.routes.Load(id)
