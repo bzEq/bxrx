@@ -60,6 +60,7 @@ func (self *HTTPProxy) handleNormal(w http.ResponseWriter, req *http.Request) {
 	client := &http.Client{Transport: self.Transport}
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
