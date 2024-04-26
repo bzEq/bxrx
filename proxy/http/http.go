@@ -6,8 +6,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-
-	"github.com/bzEq/bxrx/core"
 )
 
 // See https://www.rfc-editor.org/rfc/rfc9110.html#field.connection
@@ -28,6 +26,7 @@ func RemoveHopByHopFields(header http.Header) {
 
 type HTTPProxy struct {
 	Transport http.RoundTripper
+	Relay     func(c net.Conn, raddr string)
 }
 
 func (self *HTTPProxy) handleConnect(w http.ResponseWriter, req *http.Request) {
@@ -44,13 +43,7 @@ func (self *HTTPProxy) handleConnect(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
-	remoteConn, err := net.Dial("tcp", req.Host)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer remoteConn.Close()
-	core.RunSimpleSwitch(core.NewRawPort(c), core.NewRawPort(remoteConn))
+	self.Relay(c, req.Host)
 }
 
 func copyHeader(dst, src http.Header) {

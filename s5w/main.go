@@ -20,19 +20,27 @@ import (
 
 var options relayer.Options
 
-func startLocalHTTPProxy() error {
+func startLocalHTTPProxy(be core.Backend) error {
 	socksProxyURL, err := url.Parse("socks5://" + options.LocalAddr)
 	if err != nil {
 		return err
 	}
+	fe := relayer.NewHTTPProxyFE()
 	proxy := &h1p.HTTPProxy{
 		Transport: &http.Transport{Proxy: http.ProxyURL(socksProxyURL)},
+		Relay:     fe.Capture,
 	}
 	server := &http.Server{
 		Addr:    options.LocalHTTPProxy,
 		Handler: proxy,
 	}
 	go server.ListenAndServe()
+	go func() {
+		r := core.NewRelayer(fe, be)
+		if err := r.Relay(); err != nil {
+			log.Println(err)
+		}
+	}()
 	return nil
 }
 
@@ -53,7 +61,7 @@ func startRelayer() {
 		fe = relayer.NewSocks5FE(ln.(*net.TCPListener))
 		be = relayer.NewWrapBE(options.NextHop, pipeline)
 		if options.LocalHTTPProxy != "" {
-			if err := startLocalHTTPProxy(); err != nil {
+			if err := startLocalHTTPProxy(be); err != nil {
 				log.Println(err)
 			}
 		}
