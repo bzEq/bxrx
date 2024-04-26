@@ -14,8 +14,6 @@ type Protocol interface {
 	Unpack(*bufio.Reader, *IoVec) error
 }
 
-type ProtocolStack struct{}
-
 type ProtocolWithPass struct {
 	P  Protocol
 	PP Pass
