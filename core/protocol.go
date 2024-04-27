@@ -58,7 +58,9 @@ func (self *HTTPProtocol) Pack(b *IoVec, out *bufio.Writer) error {
 func (self *HTTPProtocol) Unpack(in *bufio.Reader, b *IoVec) error {
 	req, err := http.ReadRequest(in)
 	if err != nil {
-		log.Println(err)
+		if err != io.EOF {
+			log.Println(err)
+		}
 		return err
 	}
 	defer req.Body.Close()
