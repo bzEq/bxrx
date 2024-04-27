@@ -52,7 +52,6 @@ func (self *HTTPProtocol) Pack(b *IoVec, out *bufio.Writer) error {
 			return io.NopCloser(b), nil
 		}
 	}
-	log.Printf("Packing %d bytes\n", req.ContentLength)
 	return req.Write(out)
 }
 
@@ -68,7 +67,6 @@ func (self *HTTPProtocol) Unpack(in *bufio.Reader, b *IoVec) error {
 		log.Println(err)
 		return err
 	}
-	log.Printf("Unpacking %d bytes\n", req.ContentLength)
 	body := make([]byte, req.ContentLength)
 	if _, err = io.ReadFull(req.Body, body); err != nil {
 		log.Println(err)
