@@ -147,13 +147,13 @@ func SendReply(w net.Conn, r Reply) (err error) {
 	return
 }
 
-func GetDialAddress(req Request) string {
-	port := fmt.Sprintf("%d", binary.BigEndian.Uint16(req.DST_PORT[:2]))
-	switch req.ATYP {
+func GetDialAddress(atyp byte, addr []byte, port [2]byte) string {
+	p := fmt.Sprintf("%d", binary.BigEndian.Uint16(port[:2]))
+	switch atyp {
 	case ATYP_IPV4, ATYP_IPV6:
-		return net.JoinHostPort(net.IP(req.DST_ADDR).String(), port)
+		return net.JoinHostPort(net.IP(addr).String(), p)
 	case ATYP_DOMAINNAME:
-		return net.JoinHostPort(string(req.DST_ADDR), port)
+		return net.JoinHostPort(string(addr), p)
 	default:
 		return ""
 	}
