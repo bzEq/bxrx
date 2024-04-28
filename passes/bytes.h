@@ -3,7 +3,9 @@
 #ifndef BX_BYTES_H
 #define BX_BYTES_H
 
-void ByteSwap(void *restrict dst, const void *restrict src, size_t len);
+#include <stddef.h>
+
+void ByteSwap(void *__restrict__ dst, const void *__restrict__ src, size_t len);
 void ByteSwapInPlace(void *restrict, size_t);
 
 #endif
