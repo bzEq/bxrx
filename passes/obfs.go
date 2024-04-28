@@ -2,9 +2,7 @@
 
 package passes
 
-// #cgo CXXFLAGS: -O3
 // #include "bytes.h"
-// #include <stdlib.h>
 import "C"
 
 import (
