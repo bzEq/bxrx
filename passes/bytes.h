@@ -6,6 +6,6 @@
 #include <stddef.h>
 
 void ByteSwap(void *__restrict__ dst, const void *__restrict__ src, size_t len);
-void ByteSwapInPlace(void *restrict, size_t);
+void ByteSwapInPlace(void *__restrict__, size_t);
 
 #endif
