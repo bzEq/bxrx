@@ -7,31 +7,21 @@ import (
 )
 
 type HTTPProxyFE struct {
-	q chan struct {
-		core.Port
-		string
-	}
+	ch chan core.AcceptResult
 }
 
 func NewHTTPProxyFE() *HTTPProxyFE {
 	return &HTTPProxyFE{
-		make(chan struct {
-			core.Port
-			string
-		}),
+		make(chan core.AcceptResult),
 	}
 }
 
 func (self *HTTPProxyFE) Capture(c net.Conn, raddr string) {
-	self.q <- struct {
-		core.Port
-		string
-	}{core.NewRawPort(c), raddr}
+	self.ch <- core.AcceptResult{core.NewRawPort(c), raddr}
 }
 
-func (self *HTTPProxyFE) Accept() (p core.Port, addr string, err error) {
-	t := <-self.q
-	p = t.Port
-	addr = t.string
+func (self *HTTPProxyFE) Accept() (ch chan core.AcceptResult) {
+	ch = make(chan core.AcceptResult)
+	ch <- (<-self.ch)
 	return
 }

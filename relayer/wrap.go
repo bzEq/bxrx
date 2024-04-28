@@ -36,16 +36,23 @@ func (self *WrapFE) handshake(c net.Conn) (p core.Port, addr string, err error) 
 	return
 }
 
-func (self *WrapFE) Accept() (p core.Port, addr string, err error) {
+func (self *WrapFE) Accept() (ch chan core.AcceptResult) {
+	ch = make(chan core.AcceptResult)
 	c, err := self.ln.Accept()
 	if err != nil {
 		log.Println(err)
-		return nil, "", err
+		close(ch)
+		return
 	}
-	p, addr, err = self.handshake(c)
-	if err != nil {
-		c.Close()
-	}
+	go func() {
+		p, addr, err := self.handshake(c)
+		if err != nil {
+			close(ch)
+			c.Close()
+			return
+		}
+		ch <- core.AcceptResult{p, addr}
+	}()
 	return
 }
 
@@ -72,15 +79,22 @@ func (self *WrapBE) handshake(c net.Conn, addr string) (p core.Port, err error) 
 	return
 }
 
-func (self *WrapBE) Dial(addr string) (p core.Port, err error) {
-	c, err := net.Dial("tcp", self.raddr)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	p, err = self.handshake(c, addr)
-	if err != nil {
-		c.Close()
-	}
+func (self *WrapBE) Dial(addr string) (ch chan core.DialResult) {
+	ch = make(chan core.DialResult)
+	go func() {
+		c, err := net.Dial("tcp", self.raddr)
+		if err != nil {
+			log.Println(err)
+			close(ch)
+			return
+		}
+		p, err := self.handshake(c, addr)
+		if err != nil {
+			close(ch)
+			c.Close()
+			return
+		}
+		ch <- core.DialResult{p}
+	}()
 	return
 }

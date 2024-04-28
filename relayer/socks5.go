@@ -54,14 +54,22 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error
 	return
 }
 
-func (self *Socks5FE) Accept() (p core.Port, addr string, err error) {
+func (self *Socks5FE) Accept() (ch chan core.AcceptResult) {
+	ch = make(chan core.AcceptResult)
 	c, err := self.ln.Accept()
 	if err != nil {
-		return nil, "", err
+		log.Println(err)
+		close(ch)
+		return
 	}
-	p, addr, err = self.handshake(c)
-	if err != nil {
-		c.Close()
-	}
+	go func() {
+		p, addr, err := self.handshake(c)
+		if err != nil {
+			close(ch)
+			c.Close()
+			return
+		}
+		ch <- core.AcceptResult{p, addr}
+	}()
 	return
 }

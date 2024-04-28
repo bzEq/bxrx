@@ -15,30 +15,40 @@ func NewRelayer(fe Frontend, be Backend) *Relayer {
 	return &Relayer{fe, be}
 }
 
+type AcceptResult struct {
+	Port
+	Addr string
+}
+
 type Frontend interface {
-	Accept() (Port, string, error)
+	Accept() chan AcceptResult
+}
+
+type DialResult struct {
+	Port
 }
 
 type Backend interface {
-	Dial(addr string) (Port, error)
+	Dial(addr string) chan DialResult
 }
 
 func (self *Relayer) Relay() error {
 	for {
-		fp, addr, err := self.fe.Accept()
-		if err != nil {
-			continue
-		}
-		go func(fp Port, addr string) {
-			defer fp.Close()
-			log.Println("Dialing", addr)
-			bp, err := self.be.Dial(addr)
-			if err != nil {
+		c := self.fe.Accept()
+		go func(chan AcceptResult) {
+			ar, ok := <-c
+			if !ok {
 				return
 			}
-			defer bp.Close()
-			RunSimpleSwitch(fp, bp)
-		}(fp, addr)
+			defer ar.Port.Close()
+			log.Println("Dialing", ar.Addr)
+			dr, ok := <-self.be.Dial(ar.Addr)
+			if !ok {
+				return
+			}
+			defer dr.Port.Close()
+			RunSimpleSwitch(ar.Port, dr.Port)
+		}(c)
 	}
 	return nil
 }
