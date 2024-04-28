@@ -23,7 +23,8 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error
 		log.Println("ExchangeMetadata failed:", err)
 		return
 	}
-	req, err := socks5.ReceiveRequest(c)
+	req := &socks5.Request{}
+	err = socks5.ReceiveRequest(c, req)
 	if err != nil {
 		log.Println("ReceiveRequest failed:", err)
 		return nil, "", err
@@ -33,7 +34,7 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error
 		reply := socks5.Reply{
 			VER:      req.VER,
 			REP:      socks5.REP_SUCC,
-			ATYP:     1,
+			ATYP:     socks5.ATYP_IPV4,
 			BND_ADDR: make([]byte, net.IPv4len),
 		}
 		socks5.SendReply(c, reply)
@@ -42,7 +43,7 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error
 		reply := socks5.Reply{
 			VER:      req.VER,
 			REP:      socks5.REP_COMMAND_NOT_SUPPORTED,
-			ATYP:     1,
+			ATYP:     socks5.ATYP_IPV4,
 			BND_ADDR: make([]byte, net.IPv4len),
 		}
 		socks5.SendReply(c, reply)
