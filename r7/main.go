@@ -6,7 +6,7 @@ import (
 	crand "crypto/rand"
 	"encoding/binary"
 	"flag"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"net"
@@ -87,7 +87,7 @@ func main() {
 	flag.StringVar(&options.LocalHTTPProxy, "http_proxy", "", "Enable this relayer serving as http proxy")
 	flag.Parse()
 	if !debug {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	startRelayer()
