@@ -1,6 +1,7 @@
 package socks5
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -38,19 +39,39 @@ const (
 )
 
 type Request struct {
-	VER, CMD, ATYP byte
-	DST_ADDR       []byte
-	DST_PORT       [2]byte
+	VER, CMD, RSV, ATYP byte
+	DST_ADDR            []byte
+	DST_PORT            [2]byte
 }
 
 type Reply struct {
-	VER, REP, ATYP byte
-	BND_ADDR       []byte
-	BND_PORT       [2]byte
+	VER, REP, RSV, ATYP byte
+	BND_ADDR            []byte
+	BND_PORT            [2]byte
+}
+
+type UDPRequest struct {
+	RSV        [2]byte
+	FRAG, ATYP byte
+	DST_ADDR   []byte
+	DST_PORT   [2]byte
+	DATA       []byte
 }
 
 const HANDSHAKE_TIMEOUT = 8
 
+// Read
+// +----+----------+----------+
+// |VER | NMETHODS | METHODS  |
+// +----+----------+----------+
+// | 1  |    1     | 1 to 255 |
+// +----+----------+----------+
+// Write
+// +----+--------+
+// |VER | METHOD |
+// +----+--------+
+// | 1  |   1    |
+// +----+--------+
 func ExchangeMetadata(rw net.Conn) (err error) {
 	buf := make([]byte, 255)
 	// VER, NMETHODS.
@@ -75,61 +96,70 @@ func ExchangeMetadata(rw net.Conn) (err error) {
 	return
 }
 
-func ReceiveRequest(r net.Conn) (req Request, err error) {
-	buf := make([]byte, net.IPv6len)
+// +----+-----+-------+------+----------+----------+
+// |VER | CMD |  RSV  | ATYP | DST.ADDR | DST.PORT |
+// +----+-----+-------+------+----------+----------+
+// | 1  |  1  | X'00' |  1   | Variable |    2     |
+// +----+-----+-------+------+----------+----------+
+func ReceiveRequest(r net.Conn, req *Request) (err error) {
+	buf := make([]byte, 1024)
 	// VER, CMD, RSV, ATYP
 	r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(r, buf[:4]); err != nil {
 		log.Println("Reading request failed:", err)
-		return req, err
+		return err
 	}
 	req.VER = buf[0]
 	req.CMD = buf[1]
+	req.RSV = buf[2]
 	req.ATYP = buf[3]
 	switch req.ATYP {
 	case ATYP_IPV6:
+		req.DST_ADDR = make([]byte, net.IPv6len)
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
-		if _, err = io.ReadFull(r, buf[:net.IPv6len]); err != nil {
+		if _, err = io.ReadFull(r, req.DST_ADDR); err != nil {
 			log.Println("Reading IPv6 address failed:", err)
 			return
 		}
-		req.DST_ADDR = make([]byte, net.IPv6len)
-		copy(req.DST_ADDR, buf[:net.IPv6len])
 	case ATYP_IPV4:
+		req.DST_ADDR = make([]byte, net.IPv4len)
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
-		if _, err = io.ReadFull(r, buf[:net.IPv4len]); err != nil {
+		if _, err = io.ReadFull(r, req.DST_ADDR); err != nil {
 			log.Println("Reading IPv4 address failed:", err)
 			return
 		}
-		req.DST_ADDR = make([]byte, net.IPv4len)
-		copy(req.DST_ADDR, buf[:net.IPv4len])
 	case ATYP_DOMAINNAME:
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 		if _, err = io.ReadFull(r, buf[:1]); err != nil {
 			log.Println("Reading length of domain name failed:", err)
 			return
 		}
-		req.DST_ADDR = make([]byte, buf[0])
+		req.DST_ADDR = make([]byte, int(buf[0])+1)
+		req.DST_ADDR[0] = buf[0]
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
-		if _, err = io.ReadFull(r, req.DST_ADDR); err != nil {
+		if _, err = io.ReadFull(r, req.DST_ADDR[1:]); err != nil {
 			log.Println("Reading domain name failed:", err)
 			return
 		}
 	default:
 		err = fmt.Errorf("Unsupported ATYP: %d", req.ATYP)
 		log.Println(err)
-		return req, err
+		return err
 	}
 	r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
-	_, err = io.ReadFull(r, buf[:2])
+	_, err = io.ReadFull(r, req.DST_PORT[:])
 	if err != nil {
 		log.Println("Reading port failed:", err)
-		return req, err
+		return err
 	}
-	copy(req.DST_PORT[:2], buf[:2])
-	return req, nil
+	return nil
 }
 
+// +----+-----+-------+------+----------+----------+
+// |VER | REP |  RSV  | ATYP | BND.ADDR | BND.PORT |
+// +----+-----+-------+------+----------+----------+
+// | 1  |  1  | X'00' |  1   | Variable |    2     |
+// +----+-----+-------+------+----------+----------+
 func SendReply(w net.Conn, r Reply) (err error) {
 	// FIXME: Respect Reply.
 	w.SetWriteDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
@@ -153,8 +183,73 @@ func GetDialAddress(atyp byte, addr []byte, port [2]byte) string {
 	case ATYP_IPV4, ATYP_IPV6:
 		return net.JoinHostPort(net.IP(addr).String(), p)
 	case ATYP_DOMAINNAME:
-		return net.JoinHostPort(string(addr), p)
+		return net.JoinHostPort(string(addr[1:]), p)
 	default:
-		return ""
+		panic(fmt.Sprintf("Unsupported ATYP: %d", atyp))
 	}
+}
+
+// +----+------+------+----------+----------+----------+
+// |RSV | FRAG | ATYP | DST.ADDR | DST.PORT |   DATA   |
+// +----+------+------+----------+----------+----------+
+// | 2  |  1   |  1   | Variable |    2     | Variable |
+// +----+------+------+----------+----------+----------+
+func ParseUDPRequest(buf []byte, req *UDPRequest) error {
+	r := bytes.NewReader(buf)
+	_, err := r.Read(req.RSV[:])
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	req.FRAG, err = r.ReadByte()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	req.ATYP, err = r.ReadByte()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	switch req.ATYP {
+	case ATYP_IPV4:
+		req.DST_ADDR = make([]byte, net.IPv4len)
+		_, err = r.Read(req.DST_ADDR)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+	case ATYP_IPV6:
+		req.DST_ADDR = make([]byte, net.IPv6len)
+		_, err = r.Read(req.DST_ADDR)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+	case ATYP_DOMAINNAME:
+		l, err := r.ReadByte()
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		req.DST_ADDR = make([]byte, int(l)+1)
+		req.DST_ADDR[0] = l
+		_, err = r.Read(req.DST_ADDR[1:])
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+	}
+	_, err = r.Read(req.DST_PORT[:])
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	req.DATA = make([]byte, r.Len())
+	_, err = r.Read(req.DATA)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
 }
