@@ -21,9 +21,10 @@ func (self *HTTPProxyFE) Capture(c net.Conn, raddr string) {
 }
 
 func (self *HTTPProxyFE) Accept() (ch chan core.AcceptResult) {
+	c := <-self.ch
 	ch = make(chan core.AcceptResult)
 	go func() {
-		ch <- (<-self.ch)
+		ch <- c
 	}()
 	return
 }
