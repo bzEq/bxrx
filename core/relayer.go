@@ -31,7 +31,7 @@ func (self *Relayer) Relay() error {
 		}
 		go func(fp Port, addr string) {
 			defer fp.Close()
-			log.Println("Dialing ", addr)
+			log.Println("Dialing", addr)
 			bp, err := self.be.Dial(addr)
 			if err != nil {
 				return
