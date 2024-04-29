@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Kai Luo <gluokai@gmail.com>. All rights reserved.
 
-package passes
+package pass
 
 import (
 	"bytes"

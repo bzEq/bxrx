@@ -1,6 +1,6 @@
 // Copyright (c) 2023 Kai Luo <gluokai@gmail.com>. All rights reserved.
 
-package passes
+package pass
 
 // #include "bytes.h"
 import "C"

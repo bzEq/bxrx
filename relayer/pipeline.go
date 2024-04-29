@@ -3,27 +3,28 @@
 package relayer
 
 import (
-	"github.com/bzEq/bxrx/core"
-	"github.com/bzEq/bxrx/passes"
 	"net"
+
+	"github.com/bzEq/bxrx/core"
+	"github.com/bzEq/bxrx/pass"
 )
 
-func createRandomCodec() (*passes.RandomEncoder, *passes.RandomDecoder) {
-	enc := &passes.RandomEncoder{}
-	dec := &passes.RandomDecoder{}
+func createRandomCodec() (*pass.RandomEncoder, *pass.RandomDecoder) {
+	enc := &pass.RandomEncoder{}
+	dec := &pass.RandomDecoder{}
 	{
 		pmb := &core.PackUnpackPassManagerBuilder{}
-		pmb.AddPairedPasses(&passes.OBFSEncoder{}, &passes.OBFSDecoder{})
-		pmb.AddPairedPasses(&passes.TailPaddingEncoder{}, &passes.TailPaddingDecoder{})
-		pmb.AddPairedPasses(&passes.OBFSEncoder{}, &passes.OBFSDecoder{})
+		pmb.AddPairedPasses(&pass.OBFSEncoder{}, &pass.OBFSDecoder{})
+		pmb.AddPairedPasses(&pass.TailPaddingEncoder{}, &pass.TailPaddingDecoder{})
+		pmb.AddPairedPasses(&pass.OBFSEncoder{}, &pass.OBFSDecoder{})
 		enc.AddPM(pmb.BuildPackPassManager())
 		dec.AddPM(pmb.BuildUnpackPassManager())
 	}
 	{
 		pmb := &core.PackUnpackPassManagerBuilder{}
-		pmb.AddPairedPasses(&passes.TailPaddingEncoder{}, &passes.TailPaddingDecoder{})
-		pmb.AddPairedPasses(&passes.OBFSEncoder{}, &passes.OBFSDecoder{})
-		pmb.AddPairedPasses(&passes.TailPaddingEncoder{}, &passes.TailPaddingDecoder{})
+		pmb.AddPairedPasses(&pass.TailPaddingEncoder{}, &pass.TailPaddingDecoder{})
+		pmb.AddPairedPasses(&pass.OBFSEncoder{}, &pass.OBFSDecoder{})
+		pmb.AddPairedPasses(&pass.TailPaddingEncoder{}, &pass.TailPaddingDecoder{})
 		enc.AddPM(pmb.BuildPackPassManager())
 		dec.AddPM(pmb.BuildUnpackPassManager())
 	}
