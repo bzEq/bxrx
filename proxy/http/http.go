@@ -43,6 +43,10 @@ func (self *HTTPProxy) handleConnect(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
+	if self.Relay == nil {
+		log.Println("Nil relay function, failed relaying to", req.Host)
+		return
+	}
 	self.Relay(c, req.Host)
 }
 
