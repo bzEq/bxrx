@@ -58,8 +58,7 @@ func copyHeader(dst, src http.Header) {
 	}
 }
 
-func (self *HTTPProxy) handleNormal(w http.ResponseWriter, req *http.Request) {
-	req.RequestURI = ""
+func (self *HTTPProxy) handleOther(w http.ResponseWriter, req *http.Request) {
 	RemoveHopByHopFields(req.Header)
 	client := &http.Client{Transport: self.Transport}
 	resp, err := client.Do(req)
@@ -81,6 +80,6 @@ func (self *HTTPProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodConnect {
 		self.handleConnect(w, req)
 	} else {
-		self.handleNormal(w, req)
+		self.handleOther(w, req)
 	}
 }
