@@ -59,6 +59,8 @@ func copyHeader(dst, src http.Header) {
 }
 
 func (self *HTTPProxy) handleOther(w http.ResponseWriter, req *http.Request) {
+	// To avoid 'Request.RequestURI can't be set in client requests' error.
+	req.RequestURI = ""
 	RemoveHopByHopFields(req.Header)
 	client := &http.Client{Transport: self.Transport}
 	resp, err := client.Do(req)
