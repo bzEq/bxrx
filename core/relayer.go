@@ -2,10 +2,6 @@
 
 package core
 
-import (
-	"log"
-)
-
 type Relayer struct {
 	fe Frontend
 	be Backend
@@ -41,7 +37,6 @@ func (self *Relayer) Relay() error {
 				return
 			}
 			defer ar.Port.Close()
-			log.Println("Dialing", ar.Addr)
 			dr, ok := <-self.be.Dial(ar.Addr)
 			if !ok {
 				return

@@ -88,6 +88,7 @@ func (self *WrapBE) Dial(addr string) (ch chan core.DialResult) {
 			close(ch)
 			return
 		}
+		log.Println("Relaying to", addr, "at", c.LocalAddr())
 		p, err := self.handshake(c, addr)
 		if err != nil {
 			close(ch)
