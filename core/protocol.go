@@ -64,7 +64,7 @@ func (self *HTTPProtocol) Unpack(in *bufio.Reader, b *IoVec) error {
 		return err
 	}
 	defer req.Body.Close()
-	if req.ContentLength < 0 || req.ContentLength > DEFAULT_BUFFER_LIMIT {
+	if req.ContentLength <= 0 || req.ContentLength > DEFAULT_BUFFER_LIMIT {
 		err = fmt.Errorf("Content length %d is abnormal", req.ContentLength)
 		log.Println(err)
 		return err
