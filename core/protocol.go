@@ -52,7 +52,11 @@ func (self *HTTPProtocol) Pack(b *IoVec, out *bufio.Writer) error {
 			return io.NopCloser(b), nil
 		}
 	}
-	return req.Write(out)
+	err = req.Write(out)
+	if err != nil {
+		log.Println(err)
+	}
+	return err
 }
 
 func (self *HTTPProtocol) Unpack(in *bufio.Reader, b *IoVec) error {
