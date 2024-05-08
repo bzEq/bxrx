@@ -50,54 +50,54 @@ type Port interface {
 }
 
 type NetPort struct {
-	C       net.Conn
-	P       Protocol
+	conn    net.Conn
+	proto   Protocol
 	rbuf    *bufio.Reader
 	wbuf    *bufio.Writer
 	timeout time.Duration
 }
 
 func (self *NetPort) Unpack(b *IoVec) error {
-	if err := self.C.SetReadDeadline(time.Now().Add(self.timeout)); err != nil {
+	if err := self.conn.SetReadDeadline(time.Now().Add(self.timeout)); err != nil {
 		return err
 	}
-	return self.P.Unpack(self.rbuf, b)
+	return self.proto.Unpack(self.rbuf, b)
 }
 
 func (self *NetPort) Pack(b *IoVec) error {
-	if err := self.C.SetWriteDeadline(time.Now().Add(self.timeout)); err != nil {
+	if err := self.conn.SetWriteDeadline(time.Now().Add(self.timeout)); err != nil {
 		return err
 	}
-	if err := self.P.Pack(b, self.wbuf); err != nil {
+	if err := self.proto.Pack(b, self.wbuf); err != nil {
 		return err
 	}
 	return self.wbuf.Flush()
 }
 
 func (self *NetPort) CloseRead() error {
-	return CloseRead(self.C)
+	return CloseRead(self.conn)
 }
 
 func (self *NetPort) CloseWrite() error {
-	return CloseWrite(self.C)
+	return CloseWrite(self.conn)
 }
 
 func (self *NetPort) Close() error {
-	return self.C.Close()
+	return self.conn.Close()
 }
 
 type RawNetPort struct {
-	C       net.Conn
+	conn    net.Conn
 	timeout time.Duration
 	buf     []byte
 	nr      int
 }
 
 func (self *RawNetPort) Pack(b *IoVec) error {
-	if err := self.C.SetWriteDeadline(time.Now().Add(self.timeout)); err != nil {
+	if err := self.conn.SetWriteDeadline(time.Now().Add(self.timeout)); err != nil {
 		return err
 	}
-	_, err := b.WriteTo(self.C)
+	_, err := b.WriteTo(self.conn)
 	return err
 }
 
@@ -128,12 +128,12 @@ func (self *RawNetPort) growBuffer() {
 
 func (self *RawNetPort) Unpack(b *IoVec) error {
 	self.growBuffer()
-	err := self.C.SetReadDeadline(time.Now().Add(self.timeout))
+	err := self.conn.SetReadDeadline(time.Now().Add(self.timeout))
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	self.nr, err = self.C.Read(self.buf)
+	self.nr, err = self.conn.Read(self.buf)
 	if err != nil {
 		if err != io.EOF {
 			log.Println(err)
@@ -147,15 +147,15 @@ func (self *RawNetPort) Unpack(b *IoVec) error {
 }
 
 func (self *RawNetPort) CloseRead() error {
-	return CloseRead(self.C)
+	return CloseRead(self.conn)
 }
 
 func (self *RawNetPort) CloseWrite() error {
-	return CloseWrite(self.C)
+	return CloseWrite(self.conn)
 }
 
 func (self *RawNetPort) Close() error {
-	return self.C.Close()
+	return self.conn.Close()
 }
 
 type SyncPort struct {
@@ -198,13 +198,13 @@ func NewSyncPortWithTimeout(c net.Conn, p Protocol, timeout int) *SyncPort {
 func NewPortWithTimeout(c net.Conn, p Protocol, timeout int) Port {
 	if p == nil {
 		return &RawNetPort{
-			C:       c,
+			conn:    c,
 			timeout: time.Duration(timeout) * time.Second,
 		}
 	} else {
 		return &NetPort{
-			C:       c,
-			P:       p,
+			conn:    c,
+			proto:   p,
 			rbuf:    bufio.NewReader(c),
 			wbuf:    bufio.NewWriter(c),
 			timeout: time.Duration(timeout) * time.Second,
