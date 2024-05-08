@@ -4,6 +4,8 @@ package core
 
 import (
 	"bufio"
+	"io"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -128,10 +130,14 @@ func (self *RawNetPort) Unpack(b *IoVec) error {
 	self.growBuffer()
 	err := self.C.SetReadDeadline(time.Now().Add(self.timeout))
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	self.nr, err = self.C.Read(self.buf)
 	if err != nil {
+		if err != io.EOF {
+			log.Println(err)
+		}
 		self.nr = 0
 		return err
 	}
