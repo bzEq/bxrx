@@ -65,7 +65,7 @@ func (self *NetPort) Unpack(b *IoVec) error {
 	}
 	if err := self.proto.Unpack(self.rbuf, b); err != nil {
 		if err == io.EOF {
-			log.Println("Closed by", self.conn.RemoteAddr())
+			log.Println(self.conn.RemoteAddr(), "->", self.conn.LocalAddr(), "is closed")
 		}
 		return err
 	}
@@ -156,7 +156,7 @@ func (self *RawNetPort) Unpack(b *IoVec) error {
 		if err != io.EOF {
 			log.Println(err)
 		} else {
-			log.Println("Closed by", self.conn.RemoteAddr())
+			log.Println(self.conn.RemoteAddr(), "->", self.conn.LocalAddr(), "is closed")
 		}
 		self.nr = 0
 		return err
