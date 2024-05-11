@@ -96,6 +96,10 @@ func (self *RawNetPort) Pack(b *IoVec) error {
 		return err
 	}
 	_, err := b.WriteTo(self.conn)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 	return err
 }
 
