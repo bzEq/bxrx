@@ -23,6 +23,7 @@ func (self *WrapFE) handshake(c net.Conn) (p core.Port, addr string, err error) 
 	var b core.IoVec
 	err = p.Unpack(&b)
 	if err != nil {
+		log.Println(err)
 		return
 	}
 	dec := gob.NewDecoder(&b)
