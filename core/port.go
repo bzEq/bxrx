@@ -4,6 +4,7 @@ package core
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"log"
 	"net"
@@ -61,25 +62,25 @@ type NetPort struct {
 
 func (self *NetPort) Unpack(b *IoVec) error {
 	if err := self.conn.SetReadDeadline(time.Now().Add(self.timeout)); err != nil {
-		return err
+		return Tr(err)
 	}
 	if err := self.proto.Unpack(self.rbuf, b); err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			log.Println(self.conn.RemoteAddr(), "->", self.conn.LocalAddr(), "is closed")
 		}
-		return err
+		return Tr(err)
 	}
 	return nil
 }
 
 func (self *NetPort) Pack(b *IoVec) error {
 	if err := self.conn.SetWriteDeadline(time.Now().Add(self.timeout)); err != nil {
-		return err
+		return Tr(err)
 	}
 	if err := self.proto.Pack(b, self.wbuf); err != nil {
-		return err
+		return Tr(err)
 	}
-	return self.wbuf.Flush()
+	return Tr(self.wbuf.Flush())
 }
 
 func (self *NetPort) CloseRead() error {
@@ -114,10 +115,6 @@ func (self *RawNetPort) Pack(b *IoVec) error {
 		return err
 	}
 	_, err := b.WriteTo(self.conn)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
 	return err
 }
 
@@ -144,22 +141,19 @@ func (self *RawNetPort) growBuffer() {
 	self.buf = make([]byte, l)
 }
 
-func (self *RawNetPort) Unpack(b *IoVec) error {
+func (self *RawNetPort) Unpack(b *IoVec) (err error) {
 	self.growBuffer()
-	err := self.conn.SetReadDeadline(time.Now().Add(self.timeout))
+	err = self.conn.SetReadDeadline(time.Now().Add(self.timeout))
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 	self.nr, err = self.conn.Read(self.buf)
 	if err != nil {
-		if err != io.EOF {
-			log.Println(err)
-		} else {
+		if errors.Is(err, io.EOF) {
 			log.Println(self.conn.RemoteAddr(), "->", self.conn.LocalAddr(), "is closed")
 		}
 		self.nr = 0
-		return err
+		return Tr(err)
 	}
 	b.Take(self.buf[:self.nr])
 	self.buf = self.buf[self.nr:]

@@ -23,6 +23,7 @@ func TestJsonRPC(t *testing.T) {
 	var resp Resp
 	rpc.Request(&Req{}, &resp)
 	if resp.Rc != 1024 {
+		t.Log(resp)
 		t.Fail()
 	}
 }
@@ -45,6 +46,7 @@ func TestGobRPC(t *testing.T) {
 	var resp Resp
 	rpc.Request(&Req{}, &resp)
 	if resp.Rc != 1024 {
+		t.Log(resp)
 		t.Fail()
 	}
 }

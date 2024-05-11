@@ -5,6 +5,7 @@ package core
 import (
 	"fmt"
 	"net"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -157,4 +158,12 @@ func (self *Set[V]) Size() int {
 
 func (self *Set[V]) Range(f func(V) bool) {
 	self.m.Range(func(v V, _ bool) bool { return f(v) })
+}
+
+func Tr(err error) error {
+	if err == nil {
+		return err
+	}
+	_, fn, line, _ := runtime.Caller(2)
+	return fmt.Errorf("[%s:%d] %w", fn, line, err)
 }
