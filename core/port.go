@@ -47,6 +47,8 @@ type Port interface {
 	CloseRead() error
 	CloseWrite() error
 	Close() error
+	LocalAddr() net.Addr
+	RemoteAddr() net.Addr
 }
 
 type NetPort struct {
@@ -90,6 +92,14 @@ func (self *NetPort) CloseWrite() error {
 
 func (self *NetPort) Close() error {
 	return self.conn.Close()
+}
+
+func (self *NetPort) LocalAddr() net.Addr {
+	return self.conn.LocalAddr()
+}
+
+func (self *NetPort) RemoteAddr() net.Addr {
+	return self.conn.RemoteAddr()
 }
 
 type RawNetPort struct {
@@ -166,6 +176,14 @@ func (self *RawNetPort) CloseWrite() error {
 
 func (self *RawNetPort) Close() error {
 	return self.conn.Close()
+}
+
+func (self *RawNetPort) LocalAddr() net.Addr {
+	return self.conn.LocalAddr()
+}
+
+func (self *RawNetPort) RemoteAddr() net.Addr {
+	return self.conn.RemoteAddr()
 }
 
 type SyncPort struct {
