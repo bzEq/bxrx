@@ -5,7 +5,6 @@ package pass
 import (
 	"bytes"
 	"encoding/binary"
-	"log"
 	"math/rand"
 
 	"github.com/bzEq/bxrx/core"
@@ -29,8 +28,7 @@ type TailPaddingDecoder struct{}
 func (self *TailPaddingDecoder) Run(b *core.IoVec) error {
 	t, err := b.LastByte()
 	if err != nil {
-		log.Println(err)
-		return err
+		return core.Tr(err)
 	}
 	return b.Drop(1 + int(t))
 }
@@ -43,8 +41,7 @@ func (self *OBFSEncoder) Run(b *core.IoVec) error {
 	buf := b.Consume()
 	buf, err := self.FastOBFS.Encode(buf)
 	if err != nil {
-		log.Println(err)
-		return err
+		return core.Tr(err)
 	}
 	b.Take(buf)
 	return nil
@@ -58,8 +55,7 @@ func (self *OBFSDecoder) Run(b *core.IoVec) error {
 	buf := b.Consume()
 	buf, err := self.FastOBFS.Decode(buf)
 	if err != nil {
-		log.Println(err)
-		return err
+		return core.Tr(err)
 	}
 	b.Take(buf)
 	return nil
@@ -95,8 +91,7 @@ func (self *RandomDecoder) AddPM(p *core.PassManager) {
 func (self *RandomDecoder) Run(b *core.IoVec) error {
 	t, err := b.LastByte()
 	if err != nil {
-		log.Println(err)
-		return err
+		return core.Tr(err)
 	}
 	n := int(t)
 	b.Drop(1)
