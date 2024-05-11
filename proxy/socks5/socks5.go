@@ -5,9 +5,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"time"
+
+	"github.com/bzEq/bxrx/core"
 )
 
 const VER = 5
@@ -77,20 +78,20 @@ func ExchangeMetadata(rw net.Conn) (err error) {
 	// VER, NMETHODS.
 	rw.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(rw, buf[:2]); err != nil {
-		log.Println("Reading VER, NMETHODS failed:", err)
+		err = core.Tr(fmt.Errorf("Reading VER, NMETHODS failed: %w", err))
 		return
 	}
 	// METHODS.
 	methods := buf[1]
 	rw.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(rw, buf[:methods]); err != nil {
-		log.Println("Reading METHODS failed:", err)
+		err = core.Tr(fmt.Errorf("Reading METHODS failed: %w", err))
 		return
 	}
 	// No auth for now.
 	rw.SetWriteDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = rw.Write([]byte{VER, 0}); err != nil {
-		log.Println("Writing VER failed:", err)
+		err = core.Tr(fmt.Errorf("Writing VER failed: %w", err))
 		return
 	}
 	return
@@ -106,7 +107,7 @@ func ReceiveRequest(r net.Conn, req *Request) (err error) {
 	// VER, CMD, RSV, ATYP
 	r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = io.ReadFull(r, buf[:4]); err != nil {
-		log.Println("Reading request failed:", err)
+		err = core.Tr(fmt.Errorf("Reading request failed: %w", err))
 		return err
 	}
 	req.VER = buf[0]
@@ -118,39 +119,38 @@ func ReceiveRequest(r net.Conn, req *Request) (err error) {
 		req.DST_ADDR = make([]byte, net.IPv6len)
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 		if _, err = io.ReadFull(r, req.DST_ADDR); err != nil {
-			log.Println("Reading IPv6 address failed:", err)
+			err = core.Tr(fmt.Errorf("Reading IPv6 address failed: %w", err))
 			return
 		}
 	case ATYP_IPV4:
 		req.DST_ADDR = make([]byte, net.IPv4len)
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 		if _, err = io.ReadFull(r, req.DST_ADDR); err != nil {
-			log.Println("Reading IPv4 address failed:", err)
+			err = core.Tr(fmt.Errorf("Reading IPv4 address failed: %w", err))
 			return
 		}
 	case ATYP_DOMAINNAME:
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 		if _, err = io.ReadFull(r, buf[:1]); err != nil {
-			log.Println("Reading length of domain name failed:", err)
+			err = core.Tr(fmt.Errorf("Reading length of domain name failed: %w", err))
 			return
 		}
 		req.DST_ADDR = make([]byte, int(buf[0])+1)
 		req.DST_ADDR[0] = buf[0]
 		r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 		if _, err = io.ReadFull(r, req.DST_ADDR[1:]); err != nil {
-			log.Println("Reading domain name failed:", err)
+			err = core.Tr(fmt.Errorf("Reading domain name failed: %w", err))
 			return
 		}
 	default:
-		err = fmt.Errorf("Unsupported ATYP: %d", req.ATYP)
-		log.Println(err)
+		err = core.Tr(fmt.Errorf("Unsupported ATYP: %d", req.ATYP))
 		return err
 	}
 	r.SetReadDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	_, err = io.ReadFull(r, req.DST_PORT[:])
 	if err != nil {
-		log.Println("Reading port failed:", err)
-		return err
+		err = core.Tr(fmt.Errorf("Reading port failed: %w", err))
+		return
 	}
 	return nil
 }
@@ -198,58 +198,49 @@ func ParseUDPRequest(buf []byte, req *UDPRequest) error {
 	r := bytes.NewReader(buf)
 	_, err := r.Read(req.RSV[:])
 	if err != nil {
-		log.Println(err)
-		return err
+		return core.Tr(err)
 	}
 	req.FRAG, err = r.ReadByte()
 	if err != nil {
-		log.Println(err)
-		return err
+		return core.Tr(err)
 	}
 	req.ATYP, err = r.ReadByte()
 	if err != nil {
-		log.Println(err)
-		return err
+		return core.Tr(err)
 	}
 	switch req.ATYP {
 	case ATYP_IPV4:
 		req.DST_ADDR = make([]byte, net.IPv4len)
 		_, err = r.Read(req.DST_ADDR)
 		if err != nil {
-			log.Println(err)
-			return err
+			return core.Tr(err)
 		}
 	case ATYP_IPV6:
 		req.DST_ADDR = make([]byte, net.IPv6len)
 		_, err = r.Read(req.DST_ADDR)
 		if err != nil {
-			log.Println(err)
-			return err
+			return core.Tr(err)
 		}
 	case ATYP_DOMAINNAME:
 		l, err := r.ReadByte()
 		if err != nil {
-			log.Println(err)
-			return err
+			return core.Tr(err)
 		}
 		req.DST_ADDR = make([]byte, int(l)+1)
 		req.DST_ADDR[0] = l
 		_, err = r.Read(req.DST_ADDR[1:])
 		if err != nil {
-			log.Println(err)
-			return err
+			return core.Tr(err)
 		}
 	}
 	_, err = r.Read(req.DST_PORT[:])
 	if err != nil {
-		log.Println(err)
-		return err
+		return core.Tr(err)
 	}
 	req.DATA = make([]byte, r.Len())
 	_, err = r.Read(req.DATA)
 	if err != nil {
-		log.Println(err)
-		return err
+		return core.Tr(err)
 	}
 	return nil
 }
