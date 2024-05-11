@@ -76,6 +76,10 @@ func (self *WrapBE) handshake(c net.Conn, addr string) (p core.Port, err error) 
 	}
 	p = self.pc.Create(c)
 	err = p.Pack(&b)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	return
 }
 
