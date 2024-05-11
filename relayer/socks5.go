@@ -27,7 +27,7 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error
 	err = socks5.ReceiveRequest(c, req)
 	if err != nil {
 		log.Println("ReceiveRequest failed:", err)
-		return nil, "", err
+		return
 	}
 	switch req.CMD {
 	case socks5.CMD_CONNECT:
@@ -39,6 +39,8 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error
 		}
 		socks5.SendReply(c, reply)
 		addr = socks5.GetDialAddress(req.ATYP, req.DST_ADDR, req.DST_PORT)
+		p = core.NewRawPort(c)
+		return
 	default:
 		reply := socks5.Reply{
 			VER:      req.VER,
@@ -49,9 +51,8 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error
 		socks5.SendReply(c, reply)
 		err = fmt.Errorf("Unsupported CMD: %d", req.CMD)
 		log.Println(err)
+		return
 	}
-	p = core.NewRawPort(c)
-	return
 }
 
 func (self *Socks5FE) Accept() (ch chan core.AcceptResult) {
