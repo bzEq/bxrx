@@ -161,9 +161,9 @@ func (self *Set[V]) Range(f func(V) bool) {
 }
 
 func Tr(err error) error {
-	if err == nil {
-		return err
+	if err != nil {
+		_, fn, line, _ := runtime.Caller(1)
+		return fmt.Errorf("[%s:%d] %w", fn, line, err)
 	}
-	_, fn, line, _ := runtime.Caller(1)
-	return fmt.Errorf("[%s:%d] %w", fn, line, err)
+	return nil
 }
