@@ -14,7 +14,6 @@ func createRandomCodec() (*pass.RandomEncoder, *pass.RandomDecoder) {
 	dec := &pass.RandomDecoder{}
 	{
 		pmb := &core.PackUnpackPassManagerBuilder{}
-		pmb.AddPairedPasses(&pass.OBFSEncoder{}, &pass.OBFSDecoder{})
 		pmb.AddPairedPasses(&pass.TailPaddingEncoder{}, &pass.TailPaddingDecoder{})
 		pmb.AddPairedPasses(&pass.OBFSEncoder{}, &pass.OBFSDecoder{})
 		enc.AddPM(pmb.BuildPackPassManager())
@@ -23,6 +22,19 @@ func createRandomCodec() (*pass.RandomEncoder, *pass.RandomDecoder) {
 	{
 		pmb := &core.PackUnpackPassManagerBuilder{}
 		pmb.AddPairedPasses(&pass.TailPaddingEncoder{}, &pass.TailPaddingDecoder{})
+		pmb.AddPairedPasses(&pass.OBFSEncoder{}, &pass.OBFSDecoder{})
+		pmb.AddPairedPasses(&pass.TailPaddingEncoder{}, &pass.TailPaddingDecoder{})
+		enc.AddPM(pmb.BuildPackPassManager())
+		dec.AddPM(pmb.BuildUnpackPassManager())
+	}
+	{
+		pmb := &core.PackUnpackPassManagerBuilder{}
+		pmb.AddPairedPasses(&pass.OBFSEncoder{}, &pass.OBFSDecoder{})
+		enc.AddPM(pmb.BuildPackPassManager())
+		dec.AddPM(pmb.BuildUnpackPassManager())
+	}
+	{
+		pmb := &core.PackUnpackPassManagerBuilder{}
 		pmb.AddPairedPasses(&pass.OBFSEncoder{}, &pass.OBFSDecoder{})
 		pmb.AddPairedPasses(&pass.TailPaddingEncoder{}, &pass.TailPaddingDecoder{})
 		enc.AddPM(pmb.BuildPackPassManager())
