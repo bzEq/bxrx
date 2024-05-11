@@ -2,6 +2,12 @@
 
 package core
 
+import (
+	"errors"
+	"io"
+	"log"
+)
+
 // SimpleSwitch is not responsible to close ports.
 type SimpleSwitch struct {
 	done [2]chan struct{}
@@ -11,26 +17,34 @@ type SimpleSwitch struct {
 func (self *SimpleSwitch) Run() {
 	go func() {
 		defer close(self.done[0])
-		self.switchTraffic(self.port[0], self.port[1])
+		if err := self.switchTraffic(self.port[0], self.port[1]); err != nil {
+			log.Println(err)
+		}
 	}()
 	go func() {
 		defer close(self.done[1])
-		self.switchTraffic(self.port[1], self.port[0])
+		if err := self.switchTraffic(self.port[1], self.port[0]); err != nil {
+			log.Println(err)
+		}
 	}()
 	<-self.done[0]
 	<-self.done[1]
 }
 
-func (self *SimpleSwitch) switchTraffic(in, out Port) {
+func (self *SimpleSwitch) switchTraffic(in, out Port) error {
 	for {
 		var b IoVec
 		if err := in.Unpack(&b); err != nil {
+			// Don't treat io.EOF as error.
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
 			out.CloseWrite()
-			return
+			return Tr(err)
 		}
 		if err := out.Pack(&b); err != nil {
 			in.CloseRead()
-			return
+			return Tr(err)
 		}
 	}
 }
