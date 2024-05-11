@@ -12,7 +12,7 @@ import (
 )
 
 const DEFAULT_TIMEOUT = 60 * 60
-const DEFAULT_BUFFER_SIZE = 64 << 10
+const DEFAULT_BUFFER_SIZE = 256 << 10
 const DEFAULT_BUFFER_LIMIT = 64 << 20
 const DEFAULT_UDP_TIMEOUT = 60
 const DEFAULT_UDP_BUFFER_SIZE = 2 << 10
@@ -107,15 +107,13 @@ func (self *RawNetPort) Pack(b *IoVec) error {
 
 func (self *RawNetPort) growBuffer() {
 	l := len(self.buf)
-	if l == 0 {
+	if l <= self.nr {
 		if self.nr == 0 {
 			// If DEFAULT_BUFFER_SIZE is too small, times of buffer allocation will increase and thus hurt performance.
 			l = DEFAULT_BUFFER_SIZE
 		} else {
 			l = self.nr * 2
 		}
-	} else if l < self.nr/2 {
-		l = self.nr
 	}
 	// Ensure we have sufficient buffer for UDP transfer.
 	if l < DEFAULT_UDP_BUFFER_SIZE {
