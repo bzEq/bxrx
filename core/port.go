@@ -61,7 +61,13 @@ func (self *NetPort) Unpack(b *IoVec) error {
 	if err := self.conn.SetReadDeadline(time.Now().Add(self.timeout)); err != nil {
 		return err
 	}
-	return self.proto.Unpack(self.rbuf, b)
+	if err := self.proto.Unpack(self.rbuf, b); err != nil {
+		if err == io.EOF {
+			log.Println("Closed by", self.conn.RemoteAddr())
+		}
+		return err
+	}
+	return nil
 }
 
 func (self *NetPort) Pack(b *IoVec) error {
@@ -139,6 +145,8 @@ func (self *RawNetPort) Unpack(b *IoVec) error {
 	if err != nil {
 		if err != io.EOF {
 			log.Println(err)
+		} else {
+			log.Println("Closed by", self.conn.RemoteAddr())
 		}
 		self.nr = 0
 		return err
