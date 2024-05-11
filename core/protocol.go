@@ -57,11 +57,6 @@ func (self *HTTPProtocol) Pack(b *IoVec, out *bufio.Writer) error {
 		log.Println(err)
 		return err
 	}
-	err = out.Flush()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
 	return err
 }
 
