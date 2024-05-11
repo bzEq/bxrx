@@ -72,7 +72,7 @@ func (self *RandomEncoder) AddPM(p *core.PassManager) {
 func (self *RandomEncoder) Run(b *core.IoVec) error {
 	n := int(rand.Uint32())
 	if err := self.pms[n%len(self.pms)].Run(b); err != nil {
-		return err
+		return core.Tr(err)
 	}
 	var padding bytes.Buffer
 	padding.WriteByte(byte(n))

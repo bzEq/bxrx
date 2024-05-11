@@ -164,15 +164,15 @@ func SendReply(w net.Conn, r Reply) (err error) {
 	// FIXME: Respect Reply.
 	w.SetWriteDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = w.Write([]byte{r.VER, r.REP, 0, r.ATYP}); err != nil {
-		return
+		return core.Tr(err)
 	}
 	w.SetWriteDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = w.Write(r.BND_ADDR); err != nil {
-		return
+		return core.Tr(err)
 	}
 	w.SetWriteDeadline(time.Now().Add(HANDSHAKE_TIMEOUT * time.Second))
 	if _, err = w.Write(r.BND_PORT[:]); err != nil {
-		return
+		return core.Tr(err)
 	}
 	return
 }
