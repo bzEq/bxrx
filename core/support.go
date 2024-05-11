@@ -164,6 +164,6 @@ func Tr(err error) error {
 	if err == nil {
 		return err
 	}
-	_, fn, line, _ := runtime.Caller(2)
+	_, fn, line, _ := runtime.Caller(1)
 	return fmt.Errorf("[%s:%d] %w", fn, line, err)
 }
