@@ -12,7 +12,7 @@ import (
 )
 
 const DEFAULT_TIMEOUT = 60 * 60
-const DEFAULT_BUFFER_SIZE = 64 << 10
+const DEFAULT_BUFFER_SIZE = 4 << 20
 const DEFAULT_BUFFER_LIMIT = 64 << 20
 const DEFAULT_UDP_TIMEOUT = 60
 const DEFAULT_UDP_BUFFER_SIZE = 2 << 10
@@ -89,8 +89,6 @@ func (self *NetPort) Close() error {
 type RawNetPort struct {
 	conn    net.Conn
 	timeout time.Duration
-	buf     []byte
-	nr      int
 }
 
 func (self *RawNetPort) Pack(b *IoVec) error {
@@ -101,48 +99,21 @@ func (self *RawNetPort) Pack(b *IoVec) error {
 	return err
 }
 
-func (self *RawNetPort) growBuffer() {
-	l := len(self.buf)
-	if l == 0 {
-		if self.nr == 0 {
-			// If DEFAULT_BUFFER_SIZE is too small, times of buffer allocation will increase and thus hurt performance.
-			l = DEFAULT_BUFFER_SIZE
-		} else {
-			l = self.nr * 2
-		}
-	} else if l < self.nr/2 {
-		l = self.nr
-	}
-	// Ensure we have sufficient buffer for UDP transfer.
-	if l < DEFAULT_UDP_BUFFER_SIZE {
-		l = DEFAULT_UDP_BUFFER_SIZE
-	}
-	if l > DEFAULT_BUFFER_LIMIT {
-		l = DEFAULT_BUFFER_LIMIT
-	}
-	if l <= len(self.buf) {
-		return
-	}
-	self.buf = make([]byte, l)
-}
-
 func (self *RawNetPort) Unpack(b *IoVec) error {
-	self.growBuffer()
 	err := self.conn.SetReadDeadline(time.Now().Add(self.timeout))
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	self.nr, err = self.conn.Read(self.buf)
+	buf := make([]byte, DEFAULT_BUFFER_SIZE)
+	nr, err := self.conn.Read(buf)
 	if err != nil {
 		if err != io.EOF {
 			log.Println(err)
 		}
-		self.nr = 0
 		return err
 	}
-	b.Take(self.buf[:self.nr])
-	self.buf = self.buf[self.nr:]
+	b.Take(buf[:nr])
 	return nil
 }
 
