@@ -112,10 +112,10 @@ type RawNetPort struct {
 
 func (self *RawNetPort) Pack(b *IoVec) error {
 	if err := self.conn.SetWriteDeadline(time.Now().Add(self.timeout)); err != nil {
-		return err
+		return Tr(err)
 	}
 	_, err := b.WriteTo(self.conn)
-	return err
+	return Tr(err)
 }
 
 func (self *RawNetPort) growBuffer() {
@@ -145,7 +145,7 @@ func (self *RawNetPort) Unpack(b *IoVec) (err error) {
 	self.growBuffer()
 	err = self.conn.SetReadDeadline(time.Now().Add(self.timeout))
 	if err != nil {
-		return err
+		return Tr(err)
 	}
 	self.nr, err = self.conn.Read(self.buf)
 	if err != nil {
