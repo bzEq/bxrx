@@ -23,14 +23,14 @@ func (self *WrapFE) handshake(c net.Conn) (p core.Port, addr string, err error) 
 	var b core.IoVec
 	err = p.Unpack(&b)
 	if err != nil {
-		log.Println(err)
+		err = core.Tr(err)
 		return
 	}
 	dec := gob.NewDecoder(&b)
 	var req wrap.TCPRequest
 	err = dec.Decode(&req)
 	if err != nil {
-		log.Println(err)
+		err = core.Tr(err)
 		return
 	}
 	addr = req.Addr
@@ -48,6 +48,7 @@ func (self *WrapFE) Accept() (ch chan core.AcceptResult) {
 	go func() {
 		p, addr, err := self.handshake(c)
 		if err != nil {
+			log.Println(err)
 			close(ch)
 			c.Close()
 			return
@@ -72,13 +73,13 @@ func (self *WrapBE) handshake(c net.Conn, addr string) (p core.Port, err error) 
 	req := wrap.TCPRequest{addr}
 	err = enc.Encode(&req)
 	if err != nil {
-		log.Println(err)
+		err = core.Tr(err)
 		return
 	}
 	p = self.pc.Create(c)
 	err = p.Pack(&b)
 	if err != nil {
-		log.Println(err)
+		err = core.Tr(err)
 		return
 	}
 	return
@@ -96,6 +97,7 @@ func (self *WrapBE) Dial(addr string) (ch chan core.DialResult) {
 		log.Println("Relaying to", addr, "at", c.LocalAddr())
 		p, err := self.handshake(c, addr)
 		if err != nil {
+			log.Println(err)
 			close(ch)
 			c.Close()
 			return

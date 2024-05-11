@@ -20,13 +20,13 @@ func NewSocks5FE(ln *net.TCPListener) *Socks5FE {
 func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error) {
 	err = socks5.ExchangeMetadata(c)
 	if err != nil {
-		log.Println("ExchangeMetadata failed:", err)
+		err = core.Tr(err)
 		return
 	}
 	req := &socks5.Request{}
 	err = socks5.ReceiveRequest(c, req)
 	if err != nil {
-		log.Println("ReceiveRequest failed:", err)
+		err = core.Tr(err)
 		return
 	}
 	switch req.CMD {
@@ -49,8 +49,7 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error
 			BND_ADDR: make([]byte, net.IPv4len),
 		}
 		socks5.SendReply(c, reply)
-		err = fmt.Errorf("Unsupported CMD: %d", req.CMD)
-		log.Println(err)
+		err = core.Tr(fmt.Errorf("Unsupported CMD: %d", req.CMD))
 		return
 	}
 }
@@ -66,6 +65,7 @@ func (self *Socks5FE) Accept() (ch chan core.AcceptResult) {
 	go func() {
 		p, addr, err := self.handshake(c)
 		if err != nil {
+			log.Println(err)
 			close(ch)
 			c.Close()
 			return
