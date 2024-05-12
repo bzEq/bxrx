@@ -46,7 +46,10 @@ func (self *Relayer) Relay() error {
 				return
 			}
 			defer dr.Port.Close()
-			log.Println("Relaying", ar.Port.RemoteAddr(), "<->", ar.Port.LocalAddr(), "<->", dr.Port.LocalAddr(), "<->", dr.Port.RemoteAddr())
+			log.Println("Relaying",
+				ar.Port.RemoteAddr(), "<->", ar.Port.LocalAddr(),
+				"<->",
+				dr.Port.LocalAddr(), "<->", dr.Port.RemoteAddr())
 			RunSimpleSwitch(ar.Port, dr.Port)
 		}(c)
 	}
