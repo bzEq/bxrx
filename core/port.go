@@ -120,25 +120,26 @@ func (self *RawNetPort) Pack(b *IoVec) error {
 
 func (self *RawNetPort) growBuffer() {
 	l := len(self.buf)
-	if l <= self.nr {
+	nl := l
+	if nl <= self.nr {
 		if self.nr == 0 {
 			// If DEFAULT_BUFFER_SIZE is too small, times of buffer allocation will increase and thus hurt performance.
-			l = DEFAULT_BUFFER_SIZE
+			nl = DEFAULT_BUFFER_SIZE
 		} else {
-			l = self.nr * 2
+			nl = self.nr * 2
 		}
 	}
 	// Ensure we have sufficient buffer for UDP transfer.
-	if l < DEFAULT_UDP_BUFFER_SIZE {
-		l = DEFAULT_UDP_BUFFER_SIZE
+	if nl < DEFAULT_UDP_BUFFER_SIZE {
+		nl = DEFAULT_UDP_BUFFER_SIZE
 	}
-	if l > DEFAULT_BUFFER_LIMIT {
-		l = DEFAULT_BUFFER_LIMIT
+	if nl > DEFAULT_BUFFER_LIMIT {
+		nl = DEFAULT_BUFFER_LIMIT
 	}
-	if l <= len(self.buf) {
+	if nl <= l {
 		return
 	}
-	self.buf = make([]byte, l)
+	self.buf = make([]byte, nl)
 }
 
 func (self *RawNetPort) Unpack(b *IoVec) (err error) {
