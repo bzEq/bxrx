@@ -39,7 +39,7 @@ func (self *Socks5FE) handshake(c net.Conn) (p core.Port, addr string, err error
 		}
 		socks5.SendReply(c, reply)
 		addr = socks5.GetDialAddress(req.ATYP, req.DST_ADDR, req.DST_PORT)
-		p = core.NewRawPort(c)
+		p = core.NewRawNetPort(c)
 		return
 	default:
 		reply := socks5.Reply{

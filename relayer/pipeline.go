@@ -60,5 +60,5 @@ func CreateProtocol(name string) core.Protocol {
 type Pipeline struct{}
 
 func (self *Pipeline) Create(c net.Conn) core.Port {
-	return core.NewPort(c, CreateProtocol(""))
+	return core.NewNetPort(c, CreateProtocol(""))
 }

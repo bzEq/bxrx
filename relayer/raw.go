@@ -27,7 +27,7 @@ func (self *TCPBE) Dial(addr string) (ch chan core.DialResult) {
 			return
 		}
 		log.Println("Relaying to", addr, "at", c.LocalAddr())
-		ch <- core.DialResult{core.NewRawPort(c)}
+		ch <- core.DialResult{core.NewRawNetPort(c)}
 	}()
 	return
 }

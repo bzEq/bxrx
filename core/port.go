@@ -60,6 +60,19 @@ type NetPort struct {
 	timeout time.Duration
 }
 
+func NewNetPortWithTimeout(c net.Conn, p Protocol, timeout int) *NetPort {
+	return &NetPort{conn: c,
+		proto:   p,
+		rbuf:    bufio.NewReader(c),
+		wbuf:    bufio.NewWriter(c),
+		timeout: time.Duration(timeout) * time.Second,
+	}
+}
+
+func NewNetPort(c net.Conn, p Protocol) *NetPort {
+	return NewNetPortWithTimeout(c, p, DEFAULT_TIMEOUT)
+}
+
 func (self *NetPort) Unpack(b *IoVec) error {
 	if err := self.conn.SetReadDeadline(time.Now().Add(self.timeout)); err != nil {
 		return Tr(err)
@@ -108,6 +121,17 @@ type RawNetPort struct {
 	timeout time.Duration
 	buf     []byte
 	nr      int
+}
+
+func NewRawNetPortWithTimeout(c net.Conn, timeout int) *RawNetPort {
+	return &RawNetPort{
+		conn:    c,
+		timeout: time.Duration(timeout) * time.Second,
+	}
+}
+
+func NewRawNetPort(c net.Conn) *RawNetPort {
+	return NewRawNetPortWithTimeout(c, DEFAULT_TIMEOUT)
 }
 
 func (self *RawNetPort) Pack(b *IoVec) error {
@@ -198,40 +222,9 @@ func (self *SyncPort) Pack(b *IoVec) error {
 	return self.Port.Pack(b)
 }
 
-func NewPort(c net.Conn, p Protocol) Port {
-	return NewPortWithTimeout(c, p, DEFAULT_TIMEOUT)
-}
-
-func NewRawPort(c net.Conn) Port {
-	return NewPort(c, nil)
-}
-
-func NewSyncPort(c net.Conn, p Protocol) *SyncPort {
-	return &SyncPort{
-		Port: NewPort(c, p),
-	}
-}
-
 func NewSyncPortWithTimeout(c net.Conn, p Protocol, timeout int) *SyncPort {
 	return &SyncPort{
-		Port: NewPortWithTimeout(c, p, timeout),
-	}
-}
-
-func NewPortWithTimeout(c net.Conn, p Protocol, timeout int) Port {
-	if p == nil {
-		return &RawNetPort{
-			conn:    c,
-			timeout: time.Duration(timeout) * time.Second,
-		}
-	} else {
-		return &NetPort{
-			conn:    c,
-			proto:   p,
-			rbuf:    bufio.NewReader(c),
-			wbuf:    bufio.NewWriter(c),
-			timeout: time.Duration(timeout) * time.Second,
-		}
+		Port: NewNetPortWithTimeout(c, p, timeout),
 	}
 }
 

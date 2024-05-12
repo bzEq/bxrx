@@ -17,7 +17,7 @@ func NewHTTPProxyFE() *HTTPProxyFE {
 }
 
 func (self *HTTPProxyFE) Capture(c net.Conn, raddr string) {
-	self.ch <- core.AcceptResult{core.NewRawPort(c), raddr}
+	self.ch <- core.AcceptResult{core.NewRawNetPort(c), raddr}
 }
 
 func (self *HTTPProxyFE) Accept() (ch chan core.AcceptResult) {
