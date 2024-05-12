@@ -61,7 +61,8 @@ type NetPort struct {
 }
 
 func NewNetPortWithTimeout(c net.Conn, p Protocol, timeout int) *NetPort {
-	return &NetPort{conn: c,
+	return &NetPort{
+		conn:    c,
 		proto:   p,
 		rbuf:    bufio.NewReader(c),
 		wbuf:    bufio.NewWriter(c),
