@@ -43,22 +43,13 @@ func createRandomCodec() (*pass.RandomEncoder, *pass.RandomDecoder) {
 	return enc, dec
 }
 
-func CreateProtocol(name string) core.Protocol {
-	switch name {
-	case "raw":
-		return nil
-	default:
-		enc, dec := createRandomCodec()
-		return &core.ProtocolWithPass{
-			P:  &core.HTTPProtocol{},
-			UP: dec,
-			PP: enc,
-		}
-	}
-}
-
 type Pipeline struct{}
 
 func (self *Pipeline) Create(c net.Conn) core.Port {
-	return core.NewNetPort(c, CreateProtocol(""))
+	enc, dec := createRandomCodec()
+	pack := &core.PassManager{}
+	unpack := &core.PassManager{}
+	pack.AddPass(enc).AddPass(pass.NewHTTPEncoder(c))
+	unpack.AddPass(pass.NewHTTPDecoder(c)).AddPass(dec)
+	return core.NewNetPort(c, pack, unpack)
 }

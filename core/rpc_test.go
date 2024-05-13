@@ -14,12 +14,12 @@ func TestJsonRPC(t *testing.T) {
 	}
 	p0, p1 := net.Pipe()
 	go func() {
-		rpc := &JsonRPC{P: NewNetPort(p0, &HTTPProtocol{})}
+		rpc := &JsonRPC{P: NewRawNetPort(p0)}
 		var req Req
 		rpc.ReadRequest(&req)
 		rpc.SendResponse(&Resp{Rc: 1024})
 	}()
-	rpc := &JsonRPC{P: NewNetPort(p1, &HTTPProtocol{})}
+	rpc := &JsonRPC{P: NewRawNetPort(p1)}
 	var resp Resp
 	rpc.Request(&Req{}, &resp)
 	if resp.Rc != 1024 {
@@ -37,12 +37,12 @@ func TestGobRPC(t *testing.T) {
 	}
 	p0, p1 := net.Pipe()
 	go func() {
-		rpc := &GobRPC{P: NewNetPort(p0, &HTTPProtocol{})}
+		rpc := &GobRPC{P: NewRawNetPort(p0)}
 		var req Req
 		rpc.ReadRequest(&req)
 		rpc.SendResponse(&Resp{Rc: 1024})
 	}()
-	rpc := &GobRPC{P: NewNetPort(p1, &HTTPProtocol{})}
+	rpc := &GobRPC{P: NewRawNetPort(p1)}
 	var resp Resp
 	rpc.Request(&Req{}, &resp)
 	if resp.Rc != 1024 {

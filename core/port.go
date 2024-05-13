@@ -3,7 +3,6 @@
 package core
 
 import (
-	"bufio"
 	"errors"
 	"io"
 	"log"
@@ -54,31 +53,29 @@ type Port interface {
 
 type NetPort struct {
 	conn    net.Conn
-	proto   Protocol
-	rbuf    *bufio.Reader
-	wbuf    *bufio.Writer
 	timeout time.Duration
+	pack    Pass
+	unpack  Pass
 }
 
-func NewNetPortWithTimeout(c net.Conn, p Protocol, timeout int) *NetPort {
+func NewNetPortWithTimeout(c net.Conn, timeout int, pack, unpack Pass) *NetPort {
 	return &NetPort{
 		conn:    c,
-		proto:   p,
-		rbuf:    bufio.NewReader(c),
-		wbuf:    bufio.NewWriter(c),
 		timeout: time.Duration(timeout) * time.Second,
+		pack:    pack,
+		unpack:  unpack,
 	}
 }
 
-func NewNetPort(c net.Conn, p Protocol) *NetPort {
-	return NewNetPortWithTimeout(c, p, DEFAULT_TIMEOUT)
+func NewNetPort(c net.Conn, pack, unpack Pass) *NetPort {
+	return NewNetPortWithTimeout(c, DEFAULT_TIMEOUT, pack, unpack)
 }
 
 func (self *NetPort) Unpack(b *IoVec) error {
 	if err := self.conn.SetReadDeadline(time.Now().Add(self.timeout)); err != nil {
 		return Tr(err)
 	}
-	if err := self.proto.Unpack(self.rbuf, b); err != nil {
+	if err := self.unpack.Run(b); err != nil {
 		if errors.Is(err, io.EOF) {
 			log.Println(self.conn.RemoteAddr(), "->", self.conn.LocalAddr(), "is closed")
 		}
@@ -91,10 +88,10 @@ func (self *NetPort) Pack(b *IoVec) error {
 	if err := self.conn.SetWriteDeadline(time.Now().Add(self.timeout)); err != nil {
 		return Tr(err)
 	}
-	if err := self.proto.Pack(b, self.wbuf); err != nil {
+	if err := self.pack.Run(b); err != nil {
 		return Tr(err)
 	}
-	return Tr(self.wbuf.Flush())
+	return nil
 }
 
 func (self *NetPort) CloseRead() error {
@@ -223,9 +220,9 @@ func (self *SyncPort) Pack(b *IoVec) error {
 	return self.Port.Pack(b)
 }
 
-func NewSyncPortWithTimeout(c net.Conn, p Protocol, timeout int) *SyncPort {
+func NewSyncPortWithTimeout(c net.Conn, timeout int, pack, unpack Pass) *SyncPort {
 	return &SyncPort{
-		Port: NewNetPortWithTimeout(c, p, timeout),
+		Port: NewNetPortWithTimeout(c, timeout, pack, unpack),
 	}
 }
 

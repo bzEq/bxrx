@@ -55,6 +55,13 @@ func TestOBFS(t *testing.T) {
 	testCodec(t, enc, dec)
 }
 
+func TestHTTP(t *testing.T) {
+	buf := &bytes.Buffer{}
+	enc := NewHTTPEncoder(buf)
+	dec := NewHTTPDecoder(buf)
+	testCodec(t, enc, dec)
+}
+
 func TestRandomCodec(t *testing.T) {
 	enc := &RandomEncoder{}
 	encPM0 := &core.PassManager{}
