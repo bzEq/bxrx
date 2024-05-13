@@ -102,6 +102,7 @@ func (self *RandomDecoder) Run(b *core.IoVec) error {
 	return self.pms[n%len(self.pms)].Run(b)
 }
 
+// Must be noted HTTP codec is special, since it buffers data from reader and writer.
 type HTTPEncoder struct {
 	wbuf *bufio.Writer
 }
