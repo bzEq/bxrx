@@ -17,8 +17,8 @@ const DEFAULT_BUFFER_LIMIT = 64 << 20
 const DEFAULT_UDP_TIMEOUT = 60
 const DEFAULT_UDP_BUFFER_SIZE = 2 << 10
 
-type PortCreator interface {
-	Create(net.Conn) Port
+type PortBuilder interface {
+	FromConn(net.Conn) Port
 }
 
 func CloseRead(c net.Conn) error {

@@ -11,15 +11,15 @@ import (
 
 type WrapFE struct {
 	ln *net.TCPListener
-	pc core.PortCreator
+	pb core.PortBuilder
 }
 
-func NewWrapFE(ln *net.TCPListener, pc core.PortCreator) *WrapFE {
+func NewWrapFE(ln *net.TCPListener, pc core.PortBuilder) *WrapFE {
 	return &WrapFE{ln, pc}
 }
 
 func (self *WrapFE) handshake(c net.Conn) (p core.Port, addr string, err error) {
-	p = self.pc.Create(c)
+	p = self.pb.FromConn(c)
 	var b core.IoVec
 	err = p.Unpack(&b)
 	if err != nil {
@@ -58,13 +58,13 @@ func (self *WrapFE) Accept() (ch chan core.AcceptResult) {
 	return
 }
 
-func NewWrapBE(raddr string, pc core.PortCreator) *WrapBE {
+func NewWrapBE(raddr string, pc core.PortBuilder) *WrapBE {
 	return &WrapBE{raddr, pc}
 }
 
 type WrapBE struct {
 	raddr string
-	pc    core.PortCreator
+	pb    core.PortBuilder
 }
 
 func (self *WrapBE) handshake(c net.Conn, addr string) (p core.Port, err error) {
@@ -76,7 +76,7 @@ func (self *WrapBE) handshake(c net.Conn, addr string) (p core.Port, err error) 
 		err = core.Tr(err)
 		return
 	}
-	p = self.pc.Create(c)
+	p = self.pb.FromConn(c)
 	err = p.Pack(&b)
 	if err != nil {
 		err = core.Tr(err)

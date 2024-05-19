@@ -45,7 +45,7 @@ func createRandomCodec() (*pass.RandomEncoder, *pass.RandomDecoder) {
 
 type Pipeline struct{}
 
-func (self *Pipeline) Create(c net.Conn) core.Port {
+func (self *Pipeline) FromConn(c net.Conn) core.Port {
 	enc, dec := createRandomCodec()
 	pack := &core.PassManager{}
 	unpack := &core.PassManager{}
