@@ -159,15 +159,17 @@ func (self *HTTPDecoder) Run(b *core.IoVec) error {
 	}
 	defer req.Body.Close()
 	if req.ContentLength <= 0 || req.ContentLength > core.DEFAULT_BUFFER_LIMIT {
-		err = fmt.Errorf("Content length %d is abnormal", req.ContentLength)
 		self.InternalError()
+		err = fmt.Errorf("Content length %d is abnormal", req.ContentLength)
 		return core.Tr(err)
 	}
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
+		self.InternalError()
 		return core.Tr(err)
 	}
 	if int64(len(body)) != req.ContentLength {
+		self.InternalError()
 		err = fmt.Errorf("Content length %d, %d bytes read in the body", req.ContentLength, len(body))
 		return core.Tr(err)
 	}
