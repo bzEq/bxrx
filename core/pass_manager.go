@@ -2,6 +2,10 @@
 
 package core
 
+import (
+	"sync"
+)
+
 type Pass interface {
 	Run(*IoVec) error
 }
@@ -51,4 +55,22 @@ func (self *PackUnpackPassManagerBuilder) BuildUnpackPassManager() *PassManager 
 		self.unpackPasses[i], self.unpackPasses[n-i-1] = self.unpackPasses[n-i-1], self.unpackPasses[i]
 	}
 	return NewPassManager(self.unpackPasses)
+}
+
+type SyncPass struct {
+	Pass
+	mu *sync.Mutex
+}
+
+func (self *SyncPass) Run(b *IoVec) error {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	return self.Pass.Run(b)
+}
+
+func NewSyncPass(p Pass, mu *sync.Mutex) Pass {
+	return &SyncPass{
+		p,
+		mu,
+	}
 }

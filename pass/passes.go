@@ -6,7 +6,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -128,48 +127,29 @@ func (self *HTTPEncoder) Run(b *core.IoVec) error {
 
 type HTTPDecoder struct {
 	rbuf *bufio.Reader
-	io.Writer
 }
 
-func NewHTTPDecoder(r io.Reader, w io.Writer) *HTTPDecoder {
+func NewHTTPDecoder(r io.Reader) *HTTPDecoder {
 	return &HTTPDecoder{
 		bufio.NewReader(r),
-		w,
 	}
-}
-
-func (self *HTTPDecoder) InternalError() error {
-	resp := http.Response{
-		Status:     "500 Internal error",
-		StatusCode: 500,
-		Proto:      "HTTP/1.1",
-		ProtoMajor: 1,
-		ProtoMinor: 1,
-	}
-	return core.Tr(resp.Write(self.Writer))
 }
 
 func (self *HTTPDecoder) Run(b *core.IoVec) error {
 	req, err := http.ReadRequest(self.rbuf)
 	if err != nil {
-		if !errors.Is(err, io.EOF) {
-			self.InternalError()
-		}
 		return core.Tr(err)
 	}
 	defer req.Body.Close()
 	if req.ContentLength <= 0 || req.ContentLength > core.DEFAULT_BUFFER_LIMIT {
-		self.InternalError()
 		err = fmt.Errorf("Content length %d is abnormal", req.ContentLength)
 		return core.Tr(err)
 	}
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		self.InternalError()
 		return core.Tr(err)
 	}
 	if int64(len(body)) != req.ContentLength {
-		self.InternalError()
 		err = fmt.Errorf("Content length %d, %d bytes read in the body", req.ContentLength, len(body))
 		return core.Tr(err)
 	}

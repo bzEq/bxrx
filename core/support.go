@@ -4,7 +4,6 @@ package core
 
 import (
 	"fmt"
-	"io"
 	"net"
 	"runtime"
 	"sync"
@@ -167,15 +166,4 @@ func Tr(err error) error {
 		return fmt.Errorf("[%s:%d] %w", fn, line, err)
 	}
 	return nil
-}
-
-type SyncWriter struct {
-	io.Writer
-	sync.Mutex
-}
-
-func (self *SyncWriter) Write(b []byte) (int, error) {
-	self.Mutex.Lock()
-	defer self.Mutex.Unlock()
-	return self.Writer.Write(b)
 }

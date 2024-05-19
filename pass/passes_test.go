@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"math/rand"
-	"strings"
 	"testing"
 
 	"github.com/bzEq/bxrx/core"
@@ -59,21 +58,8 @@ func TestOBFS(t *testing.T) {
 func TestHTTP(t *testing.T) {
 	buf := &bytes.Buffer{}
 	enc := NewHTTPEncoder(buf)
-	dec := NewHTTPDecoder(buf, buf)
+	dec := NewHTTPDecoder(buf)
 	testCodec(t, enc, dec)
-}
-
-func TestHTTPInternalError(t *testing.T) {
-	buf := &bytes.Buffer{}
-	dec := NewHTTPDecoder(buf, buf)
-	if err := dec.InternalError(); err != nil {
-		t.Fatal(err)
-	}
-	s := string(buf.Bytes())
-	if strings.HasPrefix("HTTP/1.1 500", s) {
-		t.Log(s)
-		t.Fail()
-	}
 }
 
 func TestRandomCodec(t *testing.T) {
