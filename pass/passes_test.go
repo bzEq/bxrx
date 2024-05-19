@@ -58,7 +58,7 @@ func TestOBFS(t *testing.T) {
 func TestHTTP(t *testing.T) {
 	buf := &bytes.Buffer{}
 	enc := NewHTTPEncoder(buf)
-	dec := NewHTTPDecoder(buf)
+	dec := NewHTTPDecoder(buf, buf)
 	testCodec(t, enc, dec)
 }
 

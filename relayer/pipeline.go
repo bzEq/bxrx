@@ -49,7 +49,8 @@ func (self *Pipeline) FromConn(c net.Conn) core.Port {
 	enc, dec := createRandomCodec()
 	pack := &core.PassManager{}
 	unpack := &core.PassManager{}
-	pack.AddPass(enc).AddPass(pass.NewHTTPEncoder(c))
-	unpack.AddPass(pass.NewHTTPDecoder(c)).AddPass(dec)
+	w := &core.SyncWriter{Writer: c}
+	pack.AddPass(enc).AddPass(pass.NewHTTPEncoder(w))
+	unpack.AddPass(pass.NewHTTPDecoder(c, w)).AddPass(dec)
 	return core.NewNetPort(c, pack, unpack)
 }
