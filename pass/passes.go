@@ -17,7 +17,7 @@ import (
 type TailPaddingEncoder struct{}
 
 func (self *TailPaddingEncoder) Run(b *core.IoVec) error {
-	l := (rand.Uint32() % 64) & (uint32(63) << 2)
+	l := (rand.Uint32() % 64) & ((^uint32(0) >> 2) << 2)
 	var padding bytes.Buffer
 	for i := uint32(0); i < l/4; i++ {
 		binary.Write(&padding, binary.BigEndian, rand.Uint32())
