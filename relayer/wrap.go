@@ -14,8 +14,8 @@ type WrapFE struct {
 	pb core.PortBuilder
 }
 
-func NewWrapFE(ln *net.TCPListener, pc core.PortBuilder) *WrapFE {
-	return &WrapFE{ln, pc}
+func NewWrapFE(ln *net.TCPListener, pb core.PortBuilder) *WrapFE {
+	return &WrapFE{ln, pb}
 }
 
 func (self *WrapFE) handshake(c net.Conn) (p core.Port, addr string, err error) {
@@ -58,8 +58,8 @@ func (self *WrapFE) Accept() (ch chan core.AcceptResult) {
 	return
 }
 
-func NewWrapBE(raddr string, pc core.PortBuilder) *WrapBE {
-	return &WrapBE{raddr, pc}
+func NewWrapBE(raddr string, pb core.PortBuilder) *WrapBE {
+	return &WrapBE{raddr, pb}
 }
 
 type WrapBE struct {
