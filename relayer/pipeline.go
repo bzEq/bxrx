@@ -67,7 +67,7 @@ type HTTPInternalErrorPass struct {
 
 func (self *HTTPInternalErrorPass) InternalError() error {
 	resp := http.Response{
-		Status:     "500 Internal error",
+		Status:     "500 Internal Server Error",
 		StatusCode: 500,
 		Proto:      "HTTP/1.1",
 		ProtoMajor: 1,
