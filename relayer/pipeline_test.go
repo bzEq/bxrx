@@ -9,12 +9,12 @@ import (
 
 func TestHTTPInternalError(t *testing.T) {
 	buf := &bytes.Buffer{}
-	dec := &HTTPInternalErrorPass{
+	dec := &HTTP500WrapPass{
 		Pass:   nil,
 		Writer: buf,
 		mu:     &sync.Mutex{},
 	}
-	if err := dec.InternalError(); err != nil {
+	if err := dec.Respond(); err != nil {
 		t.Fatal(err)
 	}
 	s := string(buf.Bytes())

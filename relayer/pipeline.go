@@ -56,16 +56,16 @@ func (self *Pipeline) FromConn(c net.Conn) core.Port {
 	mu := &sync.Mutex{}
 	pack.AddPass(enc).AddPass(core.NewSyncPass(pass.NewHTTPEncoder(c), mu))
 	unpack.AddPass(pass.NewHTTPDecoder(c)).AddPass(dec)
-	return core.NewNetPort(c, pack, &HTTPInternalErrorPass{unpack, c, mu})
+	return core.NewNetPort(c, pack, &HTTP500WrapPass{unpack, c, mu})
 }
 
-type HTTPInternalErrorPass struct {
+type HTTP500WrapPass struct {
 	core.Pass
 	io.Writer
 	mu *sync.Mutex
 }
 
-func (self *HTTPInternalErrorPass) InternalError() error {
+func (self *HTTP500WrapPass) Respond() error {
 	resp := http.Response{
 		Status:     "500 Internal Server Error",
 		StatusCode: 500,
@@ -78,10 +78,10 @@ func (self *HTTPInternalErrorPass) InternalError() error {
 	return core.Tr(resp.Write(self.Writer))
 }
 
-func (self *HTTPInternalErrorPass) Run(b *core.IoVec) error {
+func (self *HTTP500WrapPass) Run(b *core.IoVec) error {
 	if err := self.Pass.Run(b); err != nil {
 		if !errors.Is(err, io.EOF) {
-			self.InternalError()
+			self.Respond()
 		}
 		return err
 	}
