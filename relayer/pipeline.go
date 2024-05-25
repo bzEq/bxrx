@@ -54,7 +54,7 @@ func (self *Pipeline) FromConn(c net.Conn) core.Port {
 	pack := &core.PassManager{}
 	unpack := &core.PassManager{}
 	mu := &sync.Mutex{}
-	pack.AddPass(enc).AddPass(core.NewSyncPass(pass.NewHTTPEncoder(c), mu))
+	pack.AddPass(enc).AddPass(core.AsSyncPass(pass.NewHTTPEncoder(c), mu))
 	unpack.AddPass(pass.NewHTTPDecoder(c)).AddPass(dec)
 	return core.NewNetPort(c, pack, &HTTP500WrapPass{unpack, c, mu})
 }

@@ -68,9 +68,10 @@ func (self *SyncPass) Run(b *IoVec) error {
 	return self.Pass.Run(b)
 }
 
-func NewSyncPass(p Pass, mu *sync.Mutex) Pass {
-	return &SyncPass{
-		p,
-		mu,
+func AsSyncPass(p Pass, mu *sync.Mutex) *SyncPass {
+	sp, succ := p.(*SyncPass)
+	if !succ {
+		return &SyncPass{p, mu}
 	}
+	return sp
 }

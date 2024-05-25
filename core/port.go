@@ -205,7 +205,7 @@ func (self *RawNetPort) RemoteAddr() net.Addr {
 
 type SyncPort struct {
 	Port
-	umu, pmu sync.Mutex
+	umu, pmu *sync.Mutex
 }
 
 func (self *SyncPort) Unpack(b *IoVec) error {
@@ -221,14 +221,13 @@ func (self *SyncPort) Pack(b *IoVec) error {
 }
 
 func NewSyncPortWithTimeout(c net.Conn, timeout int, pack, unpack Pass) *SyncPort {
-	return &SyncPort{
-		Port: NewNetPortWithTimeout(c, timeout, pack, unpack),
-	}
+	return AsSyncPort(NewNetPortWithTimeout(c, timeout, pack, unpack), &sync.Mutex{}, &sync.Mutex{})
 }
 
-func AsSyncPort(p Port) Port {
-	if _, succ := p.(*SyncPort); !succ {
-		return &SyncPort{Port: p}
+func AsSyncPort(p Port, umu, pmu *sync.Mutex) *SyncPort {
+	sp, succ := p.(*SyncPort)
+	if !succ {
+		return &SyncPort{Port: p, umu: umu, pmu: pmu}
 	}
-	return p
+	return sp
 }
