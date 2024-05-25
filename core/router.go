@@ -70,7 +70,7 @@ func (self *SimpleRouter) Run() {
 		}
 		ri, in := self.routes.Load(id)
 		if !in {
-			log.Println(fmt.Errorf("Route #%d doesn't exist\n", id))
+			log.Println(fmt.Errorf("Route #%d doesn't exist", id))
 			continue
 		}
 		go func(ri *RouteInfo) {
