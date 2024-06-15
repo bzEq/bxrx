@@ -20,10 +20,11 @@ import (
 
 var options relayer.Options
 
-func startLocalHTTPProxy(be core.Backend) error {
+func proxyLocalHTTP(be core.Backend) {
 	socksProxyURL, err := url.Parse("socks5://" + options.LocalAddr)
 	if err != nil {
-		return err
+		log.Println(err)
+		return
 	}
 	fe := relayer.NewHTTPProxyFE()
 	proxy := &h1p.HTTPProxy{
@@ -36,16 +37,12 @@ func startLocalHTTPProxy(be core.Backend) error {
 	}
 	log.Println("Starting http proxy on", options.LocalHTTPProxy)
 	go server.ListenAndServe()
-	go func() {
-		r := core.NewRelayer(fe, be)
-		if err := r.Relay(); err != nil {
-			log.Println(err)
-		}
-	}()
-	return nil
+	if err := core.NewRelayer(fe, be).Relay(); err != nil {
+		log.Println(err)
+	}
 }
 
-func startRelayer() {
+func relay() {
 	log.Println("Listening on", options.LocalAddr)
 	ln, err := net.Listen("tcp", options.LocalAddr)
 	if err != nil {
@@ -64,9 +61,7 @@ func startRelayer() {
 		log.Println("Backend is connecting to", options.NextHop)
 		be = relayer.NewWrapBE(options.NextHop, pipeline)
 		if options.LocalHTTPProxy != "" {
-			if err := startLocalHTTPProxy(be); err != nil {
-				log.Println(err)
-			}
+			go proxyLocalHTTP(be)
 		}
 	}
 	r := core.NewRelayer(fe, be)
@@ -90,5 +85,5 @@ func main() {
 		log.SetOutput(io.Discard)
 	}
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	startRelayer()
+	relay()
 }
