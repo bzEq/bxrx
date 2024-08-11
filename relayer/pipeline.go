@@ -65,7 +65,7 @@ type HTTP500WrapPass struct {
 	mu *sync.Mutex
 }
 
-func (self *HTTP500WrapPass) Respond() error {
+func (self *HTTP500WrapPass) return500() error {
 	resp := http.Response{
 		Status:     "500 Internal Server Error",
 		StatusCode: 500,
@@ -81,9 +81,11 @@ func (self *HTTP500WrapPass) Respond() error {
 func (self *HTTP500WrapPass) Run(b *core.IoVec) error {
 	if err := self.Pass.Run(b); err != nil {
 		if !errors.Is(err, io.EOF) {
-			self.Respond()
+			if err := self.return500(); err != nil {
+				return core.Tr(err)
+			}
 		}
-		return err
+		return core.Tr(err)
 	}
 	return nil
 }

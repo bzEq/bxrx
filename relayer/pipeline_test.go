@@ -14,7 +14,7 @@ func TestHTTPInternalError(t *testing.T) {
 		Writer: buf,
 		mu:     &sync.Mutex{},
 	}
-	if err := dec.Respond(); err != nil {
+	if err := dec.return500(); err != nil {
 		t.Fatal(err)
 	}
 	s := string(buf.Bytes())
