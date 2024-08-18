@@ -2,9 +2,9 @@
 
 package pass
 
-// cgo CFLAGS: -O3
-// cgo amd64 CFLAGS: -march=native
-// cgo arm64 CFLAGS: -mcpu=native
+// #cgo CFLAGS: -O3
+// #cgo amd64 CFLAGS: -march=native
+// #cgo arm64 CFLAGS: -mcpu=native
 // #include "bytes.h"
 import "C"
 
