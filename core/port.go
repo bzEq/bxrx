@@ -17,6 +17,9 @@ const DEFAULT_BUFFER_LIMIT = 64 << 20
 const DEFAULT_UDP_TIMEOUT = 60
 const DEFAULT_UDP_BUFFER_SIZE = 2 << 10
 
+// This is experimental.
+var TXLimit int64
+
 type PortBuilder interface {
 	FromConn(net.Conn) Port
 }
@@ -136,7 +139,13 @@ func (self *RawNetPort) Pack(b *IoVec) error {
 	if err := self.conn.SetWriteDeadline(time.Now().Add(self.timeout)); err != nil {
 		return Tr(err)
 	}
-	_, err := b.WriteTo(self.conn)
+	start := time.Now()
+	n, err := b.WriteTo(self.conn)
+	if TXLimit > 0 && err == nil {
+		expected := n * 1_000_000_000 / (TXLimit << 20)
+		elapsed := time.Since(start).Nanoseconds()
+		time.Sleep(time.Duration(expected-elapsed) * time.Nanosecond)
+	}
 	return Tr(err)
 }
 
