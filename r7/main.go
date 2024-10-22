@@ -77,7 +77,6 @@ func main() {
 	rand.Seed(seed)
 	var debug bool
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging")
-	flag.Int64Var(&core.TXLimit, "tx_limit", -1, "TX limit in MB/s")
 	flag.StringVar(&options.LocalAddr, "l", "localhost:1080", "Listen address of this relayer")
 	flag.StringVar(&options.NextHop, "n", "", "Address of next-hop relayer")
 	flag.StringVar(&options.LocalHTTPProxy, "http_proxy", "", "Enable this relayer serving as http proxy")
