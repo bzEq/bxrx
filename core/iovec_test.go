@@ -39,6 +39,9 @@ func TestDrop(t *testing.T) {
 	if s != "hello" {
 		t.Fail()
 	}
+	if len(v) != 0 {
+		t.Fail()
+	}
 }
 
 func TestDrop2(t *testing.T) {
