@@ -18,7 +18,7 @@ func TestHTTPInternalError(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := string(buf.Bytes())
-	if strings.HasPrefix(s, "HTTP/1.1 500") {
+	if strings.HasPrefix("HTTP/1.1 500", s) {
 		t.Log(s)
 		t.Fail()
 	}
