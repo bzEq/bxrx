@@ -78,6 +78,9 @@ func (self IoVec) LastByte() (byte, error) {
 		return 0, fmt.Errorf("This IoVec is empty")
 	}
 	k := len(self[l-1])
+	if k == 0 {
+		panic("Should not have empty slice in an IoVec")
+	}
 	return self[l-1][k-1], nil
 }
 
